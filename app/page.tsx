@@ -25,10 +25,19 @@ export default function Home() {
           </div>
 
           <nav className="space-y-3 text-sm text-neutral-300">
-            {["Dashboard", "IA Executiva", "Hotel", "Construção", "Finanças", "CRM", "Documentos", "Configurações"].map((item) => (
-              <div key={item} className="rounded-xl px-4 py-3 hover:bg-white/10">
+            {[
+              ["Dashboard", "/dashboard"],
+              ["IA Executiva", "/ia"],
+              ["Hotel", "/hotel"],
+              ["Construção", "/construcao"],
+              ["Finanças", "/financas"],
+              ["CRM", "/crm"],
+              ["Documentos", "/documentos"],
+              ["Configurações", "/dashboard"]
+            ].map(([item, href]) => (
+              <a key={item} href={href} className="block rounded-xl px-4 py-3 hover:bg-white/10">
                 {item}
-              </div>
+              </a>
             ))}
           </nav>
         </aside>
@@ -74,9 +83,9 @@ export default function Home() {
               </p>
 
               <div className="mt-8 flex flex-wrap gap-4">
-                <button className="rounded-full bg-orange-500 px-6 py-3 font-semibold text-black">
+                <a href="/dashboard" className="rounded-full bg-orange-500 px-6 py-3 font-semibold text-black">
                   Abrir Dashboard
-                </button>
+                </a>
                 <button className="rounded-full border border-white/15 px-6 py-3">
                   Ver Roadmap
                 </button>
