@@ -83,7 +83,7 @@ export default function Home() {
               </p>
 
               <div className="mt-8 flex flex-wrap gap-4">
-                <a href="/dashboard" className="rounded-full bg-orange-500 px-6 py-3 font-semibold text-black">
+                <a href="/login" className="rounded-full bg-orange-500 px-6 py-3 font-semibold text-black">
                   Abrir Dashboard
                 </a>
                 <button className="rounded-full border border-white/15 px-6 py-3">
