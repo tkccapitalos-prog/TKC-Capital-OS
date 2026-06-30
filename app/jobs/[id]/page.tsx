@@ -3,15 +3,27 @@ import { supabase } from "@/lib/supabase";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function JobDetailPage({ params }: any) {
-  const { data: job } = await supabase
+export default async function JobDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  const { data: job, error } = await supabase
     .from("jobs")
     .select("*")
-    .eq("id", params.id)
-    .single();
+    .eq("id", id)
+    .maybeSingle();
 
   if (!job) {
-    return <main className="min-h-screen bg-black p-10 text-white">Vaga não encontrada.</main>;
+    return (
+      <main className="min-h-screen bg-black p-10 text-white">
+        <p>Vaga não encontrada.</p>
+        <p className="mt-4 text-orange-500">ID: {id}</p>
+        <p className="mt-2 text-neutral-400">Erro: {error?.message || "sem erro"}</p>
+      </main>
+    );
   }
 
   return (
