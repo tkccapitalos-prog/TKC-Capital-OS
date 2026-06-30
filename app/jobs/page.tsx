@@ -1,12 +1,12 @@
 import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function JobsPage() {
-  const { data: jobs } = await supabase
+  const { data: jobs, error } = await supabase
     .from("jobs")
     .select("*")
-    .eq("status", "Aberta")
     .order("created_at", { ascending: false });
 
   return (
@@ -14,6 +14,11 @@ export default async function JobsPage() {
       <p className="text-sm uppercase tracking-[0.35em] text-orange-500">Fachada Figurada</p>
       <h1 className="mt-4 text-5xl font-bold">Portal de Emprego</h1>
       <p className="mt-4 text-neutral-400">Vagas abertas em Portugal.</p>
+
+      <div className="mt-6 rounded-xl border border-orange-500/40 p-4 text-sm">
+        <p>Debug jobs: {jobs ? jobs.length : 0}</p>
+        <p>Erro: {error ? error.message : "sem erro"}</p>
+      </div>
 
       <section className="mt-10 grid gap-4">
         {(jobs || []).map((job: any) => (
