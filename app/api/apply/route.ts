@@ -12,6 +12,7 @@ export async function POST(request: Request) {
     profession: formData.get("profession"),
     district: formData.get("district"),
     experience: formData.get("experience"),
+    availability: formData.get("availability"),
     status: "Novo",
   });
 
@@ -19,5 +20,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.redirect(new URL("/jobs?success=1", request.url));
+  return NextResponse.redirect(new URL("/jobs?candidatura=enviada", request.url));
 }
