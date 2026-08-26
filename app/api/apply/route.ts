@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseServerClient } from "@/lib/supabase-server";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
+  const supabase = await getSupabaseServerClient();
+
+  if (!supabase) {
+    return NextResponse.json({ error: "Supabase nao configurado" }, { status: 503 });
+  }
 
   const { error } = await supabase.from("applications").insert({
     job_id: formData.get("job_id"),

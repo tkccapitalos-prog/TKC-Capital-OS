@@ -1,17 +1,29 @@
-import { supabase } from "@/lib/supabase";
+import { getSupabaseServerClient } from "@/lib/supabase-server";
+import Link from "next/link";
+
+type Job = {
+  id: string;
+  title: string;
+  district: string | null;
+  profession: string | null;
+  quantity: number | null;
+};
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function JobsPage() {
-  const { data: jobs } = await supabase
-    .from("jobs")
-    .select("*")
-    .eq("status", "Aberta")
-    .order("created_at", { ascending: false });
+  const supabase = await getSupabaseServerClient();
+  const { data: jobs } = supabase
+    ? await supabase
+        .from("jobs")
+        .select("*")
+        .eq("status", "Aberta")
+        .order("created_at", { ascending: false })
+    : { data: [] };
 
   const uniqueJobs = Array.from(
-    new Map((jobs || []).map((job: any) => [job.title, job])).values()
+    new Map((jobs || []).map((job: Job) => [job.title, job])).values()
   );
 
   return (
@@ -21,12 +33,12 @@ export default async function JobsPage() {
       <p className="mt-4 text-neutral-400">Vagas abertas em Portugal.</p>
 
       <section className="mt-10 grid gap-4">
-        {uniqueJobs.map((job: any) => (
-          <a key={job.id} href={`/jobs/${job.id}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+        {uniqueJobs.map((job) => (
+          <Link key={job.id} href={`/jobs/${job.id}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
             <h2 className="text-2xl font-bold">{job.title}</h2>
             <p className="mt-2 text-neutral-400">{job.district} · {job.profession} · {job.quantity} vaga(s)</p>
             <p className="mt-3 text-orange-500">Candidatar-me →</p>
-          </a>
+          </Link>
         ))}
       </section>
     </main>

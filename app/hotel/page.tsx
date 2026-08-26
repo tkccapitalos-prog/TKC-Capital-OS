@@ -1,11 +1,11 @@
-export default function Page() {
-  return (
-    <main className="min-h-screen bg-[#050505] p-10 text-white">
-      <a href="/" className="text-orange-500">← Voltar</a>
-      <h1 className="mt-10 text-5xl font-bold capitalize">hotel</h1>
-      <p className="mt-4 text-neutral-400">
-        Módulo TKC Capital OS em construção.
-      </p>
-    </main>
-  );
+import type { Metadata } from "next";
+import HotelOperationsClient from "./HotelOperationsClient";
+
+export const metadata: Metadata = {
+  title: "Operacoes hoteleiras",
+  description: "Quartos, tarefas, equipas, documentos e chat por departamento.",
+};
+
+export default function HotelPage() {
+  return <HotelOperationsClient />;
 }

@@ -1,4 +1,5 @@
-import { supabase } from "@/lib/supabase";
+import { getSupabaseServerClient } from "@/lib/supabase-server";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -9,12 +10,15 @@ export default async function JobDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const supabase = await getSupabaseServerClient();
 
-  const { data: job, error } = await supabase
-    .from("jobs")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const { data: job, error } = supabase
+    ? await supabase
+        .from("jobs")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle()
+    : { data: null, error: { message: "Supabase nao configurado" } };
 
   if (!job) {
     return (
@@ -28,7 +32,7 @@ export default async function JobDetailPage({
 
   return (
     <main className="min-h-screen bg-[#050505] p-10 text-white">
-      <a href="/jobs" className="text-orange-500">← Voltar às vagas</a>
+      <Link href="/jobs" className="text-orange-500">← Voltar às vagas</Link>
 
       <section className="mt-8 max-w-4xl">
         <p className="text-sm uppercase tracking-[0.35em] text-orange-500">Fachada Figurada</p>

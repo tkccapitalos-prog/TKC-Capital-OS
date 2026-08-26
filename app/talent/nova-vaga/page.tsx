@@ -1,7 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import Link from "next/link";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
+
+type JobForm = {
+  title: string;
+  work_site: string;
+  district: string;
+  profession: string;
+  quantity: number;
+  salary: string;
+  contract_type: string;
+  start_date: string;
+  duration: string;
+  housing: boolean;
+  transport: boolean;
+  priority: string;
+  description: string;
+};
 
 export default function NovaVagaPage() {
   const [form, setForm] = useState({
@@ -22,12 +39,18 @@ export default function NovaVagaPage() {
 
   const [message, setMessage] = useState("");
 
-  function update(field: string, value: any) {
+  function update<K extends keyof JobForm>(field: K, value: JobForm[K]) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
   async function createJob() {
     setMessage("A criar vaga...");
+    const supabase = getSupabaseBrowserClient();
+
+    if (!supabase) {
+      setMessage("Supabase nao configurado.");
+      return;
+    }
 
     const { error } = await supabase.from("jobs").insert({
       ...form,
@@ -71,7 +94,7 @@ Construção com seriedade.
 
   return (
     <main className="min-h-screen bg-[#050505] p-10 text-white">
-      <a href="/talent" className="text-orange-500">← Voltar</a>
+      <Link href="/talent" className="text-orange-500">← Voltar</Link>
       <h1 className="mt-8 text-4xl font-bold">Nova vaga</h1>
       <p className="mt-3 text-neutral-400">Criar recrutamento para a Fachada Figurada Portugal.</p>
 
@@ -81,7 +104,7 @@ Construção com seriedade.
           <input placeholder="Nome da obra" className="rounded-xl bg-white px-4 py-3 text-black" onChange={(e) => update("work_site", e.target.value)} />
           <input placeholder="Distrito" className="rounded-xl bg-white px-4 py-3 text-black" onChange={(e) => update("district", e.target.value)} />
           <input placeholder="Profissão" className="rounded-xl bg-white px-4 py-3 text-black" onChange={(e) => update("profession", e.target.value)} />
-          <input type="number" placeholder="Quantidade" className="rounded-xl bg-white px-4 py-3 text-black" onChange={(e) => update("quantity", e.target.value)} />
+          <input type="number" placeholder="Quantidade" className="rounded-xl bg-white px-4 py-3 text-black" onChange={(e) => update("quantity", Number(e.target.value))} />
           <input placeholder="Salário" className="rounded-xl bg-white px-4 py-3 text-black" onChange={(e) => update("salary", e.target.value)} />
           <input placeholder="Tipo de contrato" className="rounded-xl bg-white px-4 py-3 text-black" onChange={(e) => update("contract_type", e.target.value)} />
           <input type="date" className="rounded-xl bg-white px-4 py-3 text-black" onChange={(e) => update("start_date", e.target.value)} />

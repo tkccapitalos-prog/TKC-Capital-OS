@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TKC Capital OS
 
-## Getting Started
+Sistema operacional da TKC Capital em Next.js, com dashboard corporativo e um modulo de operacoes hoteleiras em `/hotel`.
 
-First, run the development server:
+## Modulo Hotel
+
+O modulo inclui:
+
+- tarefas por departamento, comentarios e fotografias;
+- chat geral e chat autorizado por departamento;
+- perfis de operadores criados previamente pela direcao;
+- convite por email, criacao de palavra-passe e primeiro acesso;
+- documentos PDF, Word e Excel por departamento;
+- Housekeeping com 4 binomes e 74 quartos;
+- interface em frances, portugues, ingles, espanhol, italiano e polaco;
+- dominio de producao `app.tkccapital.pt`.
+
+O antigo TKC Rooms deixa de ser um segundo sistema. A operacao dos quartos passa a fazer parte deste modulo.
+
+## Arranque local
+
+Requer Node.js 22 ou superior.
 
 ```bash
+npm ci
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir `http://localhost:3000`. A configuracao publica Supabase tem valores de producao de reserva; `.env.local` pode substitui-los em desenvolvimento.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Variaveis Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Adicionar nos ambientes Production, Preview e Development:
 
-## Learn More
+```text
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+SUPABASE_PROJECT_ID
+APP_PUBLIC_URL
+API_PUBLIC_URL
+```
 
-To learn more about Next.js, take a look at the following resources:
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` e uma chave publica para o browser. Convites e conclusao do primeiro acesso passam por Edge Functions autenticadas; as chaves administrativas disponibilizadas automaticamente pela Supabase nunca entram no codigo, na Vercel ou no GitHub.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Validacao
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run check:api
+npm run lint
+npm run build
+```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Endpoint de saude: `/api/health`.

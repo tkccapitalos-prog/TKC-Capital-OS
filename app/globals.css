@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./hotel/hotel.css";
 
 :root {
   --background: #ffffff;

@@ -1,0 +1,5 @@
+[functions.invite-operator]
+verify_jwt = false
+
+[functions.complete-first-login]
+verify_jwt = false

@@ -1,0 +1,40 @@
+import { NextResponse } from "next/server";
+import {
+  DEFAULT_SUPABASE_PUBLISHABLE_KEY,
+  DEFAULT_SUPABASE_URL,
+} from "@/lib/supabase-config";
+
+export const runtime = "nodejs";
+
+export async function POST(request) {
+  const authorization = request.headers.get("authorization") || "";
+
+  if (!authorization.startsWith("Bearer ")) {
+    return NextResponse.json(
+      { ok: false, error: "Abra o convite recebido por email antes de continuar." },
+      { status: 401 },
+    );
+  }
+
+  const body = await request.text();
+  const response = await fetch(
+    `${DEFAULT_SUPABASE_URL}/functions/v1/complete-first-login`,
+    {
+      method: "POST",
+      headers: {
+        apikey: DEFAULT_SUPABASE_PUBLISHABLE_KEY,
+        Authorization: authorization,
+        "Content-Type": "application/json",
+      },
+      body,
+      cache: "no-store",
+    },
+  );
+
+  const result = await response.json().catch(() => ({
+    ok: false,
+    error: "Invalid response from the account service",
+  }));
+
+  return NextResponse.json(result, { status: response.status });
+}

@@ -1,12 +1,28 @@
-import { supabase } from "@/lib/supabase";
+import { getSupabaseServerClient } from "@/lib/supabase-server";
+import Link from "next/link";
+
+type Application = {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  email: string | null;
+  profession: string | null;
+  district: string | null;
+  availability: string | null;
+  experience: string | null;
+  status: string | null;
+  jobs: Array<{ title: string }>;
+};
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function CandidatosPage() {
-  const { data: applications, error } = await supabase
-    .from("applications")
-    .select(`
+  const supabase = await getSupabaseServerClient();
+  const { data: applications, error } = supabase
+    ? await supabase
+        .from("applications")
+        .select(`
       id,
       full_name,
       phone,
@@ -20,12 +36,13 @@ export default async function CandidatosPage() {
       jobs (
         title
       )
-    `)
-    .order("created_at", { ascending: false });
+        `)
+        .order("created_at", { ascending: false })
+    : { data: [], error: { message: "Supabase nao configurado" } };
 
   return (
     <main className="min-h-screen bg-[#050505] p-10 text-white">
-      <a href="/talent" className="text-orange-500">← Voltar</a>
+      <Link href="/talent" className="text-orange-500">← Voltar</Link>
 
       <div className="mt-8 flex items-end justify-between gap-6">
         <div>
@@ -34,9 +51,9 @@ export default async function CandidatosPage() {
           <p className="mt-3 text-neutral-400">Candidaturas recebidas pelo portal de emprego.</p>
         </div>
 
-        <a href="/jobs" className="rounded-xl bg-orange-500 px-5 py-3 font-bold text-black">
+        <Link href="/jobs" className="rounded-xl bg-orange-500 px-5 py-3 font-bold text-black">
           Ver portal público
-        </a>
+        </Link>
       </div>
 
       {error && (
@@ -46,7 +63,7 @@ export default async function CandidatosPage() {
       )}
 
       <section className="mt-10 grid gap-4">
-        {(applications || []).map((app: any) => (
+        {(applications || []).map((app: Application) => (
           <div key={app.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -55,7 +72,7 @@ export default async function CandidatosPage() {
                   {app.profession || "Profissão não indicada"} · {app.district || "Distrito não indicado"}
                 </p>
                 <p className="mt-1 text-neutral-500">
-                  Vaga: {app.jobs?.title || "Sem vaga associada"}
+                  Vaga: {app.jobs?.[0]?.title || "Sem vaga associada"}
                 </p>
               </div>
 

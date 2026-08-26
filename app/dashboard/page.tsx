@@ -2,14 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [configurationMissing, setConfigurationMissing] = useState(false);
 
   useEffect(() => {
     async function checkUser() {
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) {
+        setConfigurationMissing(true);
+        return;
+      }
+
       const { data } = await supabase.auth.getUser();
 
       if (!data.user) {
@@ -24,12 +31,19 @@ export default function DashboardPage() {
   }, [router]);
 
   async function logout() {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
     await supabase.auth.signOut();
     router.push("/login");
   }
 
   return (
     <main className="min-h-screen bg-[#050505] p-10 text-white">
+      {configurationMissing && (
+        <p className="mb-6 rounded-lg border border-amber-400/30 bg-amber-500/10 p-4 text-amber-100">
+          Configure as variaveis publicas do Supabase para ativar o login.
+        </p>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.35em] text-orange-500">
