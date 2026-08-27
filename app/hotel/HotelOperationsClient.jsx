@@ -9,6 +9,7 @@ import {
   createTaskComment,
   createTasks,
   loadHotelWorkspace,
+  setHousekeepingBinomeAssignments,
   updateHousekeepingRoom,
   updateOperatorLanguage,
   updateTask,
@@ -20,37 +21,37 @@ const CHANNELS = {
   housekeeping: {
     channel: "#02-housekeeping",
     label: "Housekeeping",
-    help: "Quartos prontos, recouches, bloqueios e prioridades."
+    helpKey: "channelHousekeepingHelp"
   },
   reception: {
     channel: "#01-reception",
     label: "Reception",
-    help: "Reservas, pedidos especiais, chegada e passagem de turno."
+    helpKey: "channelReceptionHelp"
   },
   maintenance: {
     channel: "#03-maintenance",
     label: "Maintenance",
-    help: "Avarias, fotos, quartos bloqueados e acompanhamento."
+    helpKey: "channelMaintenanceHelp"
   },
   pdj_bar: {
     channel: "#04-pdj-bar",
     label: "PDJ / Bar",
-    help: "Stock, mise en place, pequeno-almoco e bar."
+    helpKey: "channelPdjHelp"
   },
   incidents: {
     channel: "#05-incidents",
     label: "Incidents",
-    help: "Problemas operacionais sem dados pessoais sensiveis."
+    helpKey: "channelIncidentsHelp"
   },
   handover: {
     channel: "#00-handover",
     label: "Handover",
-    help: "Resumo de turno, pendentes e prioridades."
+    helpKey: "channelHandoverHelp"
   },
   direction: {
     channel: "#06-direction-prive",
     label: "Direction",
-    help: "Decisoes, arbitragem e assuntos de direcao."
+    helpKey: "channelDirectionHelp"
   }
 };
 
@@ -75,10 +76,10 @@ const ACTIVE_OPERATOR_STORAGE_KEY = "tkc-hotel-ops-active-operator";
 const TKC_ROOMS_LEGACY_URL = "https://tkc-rooms-nogent.edreammotors.chatgpt.site";
 
 const LANGUAGE_OPTIONS = [
-  { id: "fr", label: "Francais" },
-  { id: "pt", label: "Portugues" },
+  { id: "fr", label: "Français" },
+  { id: "pt", label: "Português" },
   { id: "en", label: "English" },
-  { id: "es", label: "Espanol" },
+  { id: "es", label: "Español" },
   { id: "it", label: "Italiano" },
   { id: "pl", label: "Polski" }
 ];
@@ -126,42 +127,42 @@ const UI_TEXT = {
   },
   fr: {
     language: "Langue",
-    appTitle: "Hotel Operations OS",
-    heroEyebrow: "TKC Capital / Operations hotelieres",
-    heroTitle: "Une plateforme TKC pour piloter chambres, taches, equipes et decisions.",
-    heroCopy: "Taches par departement, chambres, maintenance, incidents, documents et chat dans une seule app.",
+    appTitle: "Système d'exploitation hôtelier",
+    heroEyebrow: "TKC Capital / Opérations hôtelières",
+    heroTitle: "Une plateforme TKC pour piloter les chambres, les tâches, les équipes et les décisions.",
+    heroCopy: "Tâches par service, chambres, maintenance, incidents, documents et messagerie dans une seule app.",
     roomsDone: "Chambres faites",
     openMaintenance: "Pannes ouvertes",
     incidents: "Incidents",
-    openTasks: "Taches ouvertes",
-    housekeepingTitle: "Binomes et chambres a faire",
+    openTasks: "Tâches ouvertes",
+    housekeepingTitle: "Binômes et chambres à faire",
     totalRooms: "chambres",
     pending: "en attente",
     done: "faites",
-    blocked: "bloquees",
-    importedStructure: "Structure importee dans le systeme unique",
-    legacyNotice: "TKC Rooms devient l'ancien site; l'operation quotidienne vit ici.",
-    plannedTime: "Temps prevu",
-    generateTasks: "Generer les taches Housekeeping",
-    resetRooms: "Reinitialiser les 74 chambres",
-    singleSystem: "Systeme unique",
-    legacyIntegrated: "TKC Rooms integre",
+    blocked: "bloquées",
+    importedStructure: "Structure importée dans le système unique",
+    legacyNotice: "TKC Rooms devient l'ancien site ; l'opération quotidienne vit ici.",
+    plannedTime: "Temps prévu",
+    generateTasks: "Générer les tâches Housekeeping",
+    resetRooms: "Réinitialiser les 74 chambres",
+    singleSystem: "Système unique",
+    legacyIntegrated: "TKC Rooms intégré",
     officialApp: "App officielle",
     module: "Module",
     oldSite: "Ancien site",
-    nextStep: "Prochaine etape",
+    nextStep: "Prochaine étape",
     redirectOldLink: "rediriger l'ancien lien",
     noTwoSystems: "Pas deux logins, deux listes de chambres ou deux historiques.",
     viewLegacy: "Voir TKC Rooms ancien",
-    start: "Start",
-    control: "Controle",
+    start: "Démarrer",
+    control: "Contrôle",
     ok: "OK",
     blockShort: "Bloq.",
     activeProfile: "Profil",
     directionMode: "Direction/global",
-    exitProfile: "Quitter profil",
-    useProfile: "Utiliser profil",
-    addPhoto: "Ajouter photo",
+    exitProfile: "Quitter le profil",
+    useProfile: "Utiliser le profil",
+    addPhoto: "Ajouter une photo",
     comment: "Commenter"
   },
   en: {
@@ -326,6 +327,167 @@ const UI_TEXT = {
   }
 };
 
+const localized = (pt, fr, en, es, it, pl) => ({ pt, fr, en, es, it, pl });
+
+const UI_TEXT_EXTRA = {
+  previewLocal: localized("Pre-visualizacao local", "Apercu local", "Local preview", "Vista previa local", "Anteprima locale", "Podglad lokalny"),
+  targetDomain: localized("Dominio alvo", "Domaine cible", "Target domain", "Dominio objetivo", "Dominio di destinazione", "Domena docelowa"),
+  domain: localized("Dominio", "Domaine", "Domain", "Dominio", "Dominio", "Domena"),
+  operationalSummary: localized("Resumo operacional", "Resume operationnel", "Operational summary", "Resumen operativo", "Riepilogo operativo", "Podsumowanie operacyjne"),
+  operationalEvent: localized("Evento operacional", "Evenement operationnel", "Operational event", "Evento operativo", "Evento operativo", "Zdarzenie operacyjne"),
+  createAlert: localized("Criar alerta", "Creer une alerte", "Create alert", "Crear alerta", "Crea avviso", "Utworz alert"),
+  clearDemo: localized("Limpar demo", "Effacer la demo", "Clear demo", "Borrar demo", "Cancella demo", "Wyczysc demo"),
+  department: localized("Departamento", "Departement", "Department", "Departamento", "Reparto", "Dzial"),
+  eventType: localized("Tipo de evento", "Type d'evenement", "Event type", "Tipo de evento", "Tipo di evento", "Typ zdarzenia"),
+  roomZone: localized("Quarto / zona", "Chambre / zone", "Room / area", "Habitacion / zona", "Camera / zona", "Pokoj / strefa"),
+  priority: localized("Prioridade", "Priorite", "Priority", "Prioridad", "Priorita", "Priorytet"),
+  normal: localized("Normal", "Normale", "Normal", "Normal", "Normale", "Normalny"),
+  urgent: localized("Urgente", "Urgente", "Urgent", "Urgente", "Urgente", "Pilne"),
+  blocking: localized("Bloqueante", "Bloquante", "Blocking", "Bloqueante", "Bloccante", "Blokujace"),
+  operationalNote: localized("Nota operacional", "Note operationnelle", "Operational note", "Nota operativa", "Nota operativa", "Notatka operacyjna"),
+  notePlaceholder: localized("Ex.: TV nao funciona, quarto pronto para controlo, falta stock...", "Ex. : TV en panne, chambre prete pour controle, stock manquant...", "E.g. TV not working, room ready for inspection, stock missing...", "Ej.: TV no funciona, habitacion lista para control, falta stock...", "Es.: TV non funziona, camera pronta per il controllo, stock mancante...", "Np. telewizor nie dziala, pokoj gotowy do kontroli, brak zapasu..."),
+  saveSendAlert: localized("Guardar e enviar alerta", "Enregistrer et envoyer l'alerte", "Save and send alert", "Guardar y enviar alerta", "Salva e invia avviso", "Zapisz i wyslij alert"),
+  loadExample: localized("Carregar exemplo", "Charger un exemple", "Load example", "Cargar ejemplo", "Carica esempio", "Wczytaj przyklad"),
+  operationalStructure: localized("Estrutura operacional", "Structure operationnelle", "Operational structure", "Estructura operativa", "Struttura operativa", "Struktura operacyjna"),
+  appDepartments: localized("Departamentos da app", "Departements de l'app", "App departments", "Departamentos de la app", "Reparti dell'app", "Dzialy aplikacji"),
+  channelHousekeepingHelp: localized("Quartos prontos, recouches, bloqueios e prioridades.", "Chambres pretes, recouches, blocages et priorites.", "Ready rooms, stayovers, blocks and priorities.", "Habitaciones listas, estancias, bloqueos y prioridades.", "Camere pronte, fermate, blocchi e priorita.", "Gotowe pokoje, pobyty, blokady i priorytety."),
+  channelReceptionHelp: localized("Reservas, pedidos especiais, chegada e passagem de turno.", "Reservations, demandes speciales, arrivees et passation.", "Bookings, special requests, arrivals and handover.", "Reservas, solicitudes especiales, llegadas y cambio de turno.", "Prenotazioni, richieste speciali, arrivi e passaggio turno.", "Rezerwacje, prosby specjalne, przyjazdy i przekazanie zmiany."),
+  channelMaintenanceHelp: localized("Avarias, fotos, quartos bloqueados e acompanhamento.", "Pannes, photos, chambres bloquees et suivi.", "Faults, photos, blocked rooms and follow-up.", "Averias, fotos, habitaciones bloqueadas y seguimiento.", "Guasti, foto, camere bloccate e monitoraggio.", "Usterki, zdjecia, zablokowane pokoje i dalsze dzialania."),
+  channelPdjHelp: localized("Stock, mise en place, pequeno-almoco e bar.", "Stock, mise en place, petit-dejeuner et bar.", "Stock, setup, breakfast and bar.", "Stock, preparacion, desayuno y bar.", "Scorte, preparazione, colazione e bar.", "Zapasy, przygotowanie, sniadanie i bar."),
+  channelIncidentsHelp: localized("Problemas operacionais sem dados pessoais sensiveis.", "Problemes operationnels sans donnees personnelles sensibles.", "Operational issues without sensitive personal data.", "Problemas operativos sin datos personales sensibles.", "Problemi operativi senza dati personali sensibili.", "Problemy operacyjne bez wrazliwych danych osobowych."),
+  channelHandoverHelp: localized("Resumo de turno, pendentes e prioridades.", "Resume de service, points en attente et priorites.", "Shift summary, pending items and priorities.", "Resumen de turno, pendientes y prioridades.", "Riepilogo turno, attivita in sospeso e priorita.", "Podsumowanie zmiany, oczekujace zadania i priorytety."),
+  channelDirectionHelp: localized("Decisoes, arbitragem e assuntos de direcao.", "Decisions, arbitrages et sujets de direction.", "Decisions, arbitration and management matters.", "Decisiones, arbitraje y asuntos de direccion.", "Decisioni, arbitraggio e temi della direzione.", "Decyzje, rozstrzygniecia i sprawy dyrekcji."),
+  filesByDepartment: localized("Ficheiros por departamento", "Fichiers par departement", "Files by department", "Archivos por departamento", "File per reparto", "Pliki wedlug dzialu"),
+  documentSetTitle: localized("Circulares, SOPs e fichas", "Circulaires, SOP et fiches de poste", "Circulars, SOPs and job sheets", "Circulares, SOP y fichas de puesto", "Circolari, SOP e schede mansione", "Okolniki, SOP i opisy stanowisk"),
+  files: localized("ficheiros", "fichiers", "files", "archivos", "file", "plikow"),
+  type: localized("Tipo", "Type", "Type", "Tipo", "Tipo", "Typ"),
+  title: localized("Titulo", "Titre", "Title", "Titulo", "Titolo", "Tytul"),
+  file: localized("Ficheiro", "Fichier", "File", "Archivo", "File", "Plik"),
+  note: localized("Nota", "Note", "Note", "Nota", "Nota", "Notatka"),
+  docTitlePlaceholder: localized("Ex.: SOP limpeza de quarto", "Ex. : SOP nettoyage de chambre", "E.g. room-cleaning SOP", "Ej.: SOP limpieza de habitacion", "Es.: SOP pulizia camera", "Np. SOP sprzatania pokoju"),
+  docNotePlaceholder: localized("Quando usar, quem aplica, versao...", "Quand l'utiliser, qui l'applique, version...", "When to use, who applies it, version...", "Cuando usar, quien aplica, version...", "Quando usarlo, chi lo applica, versione...", "Kiedy uzywac, kto stosuje, wersja..."),
+  addFile: localized("Adicionar ficheiro", "Ajouter le fichier", "Add file", "Agregar archivo", "Aggiungi file", "Dodaj plik"),
+  noFiles: localized("Sem ficheiros neste departamento.", "Aucun fichier dans ce departement.", "No files in this department.", "No hay archivos en este departamento.", "Nessun file in questo reparto.", "Brak plikow w tym dziale."),
+  openDocument: localized("Abrir", "Ouvrir", "Open", "Abrir", "Apri", "Otworz"),
+  metadataOnly: localized("Apenas metadados", "Metadonnees uniquement", "Metadata only", "Solo metadatos", "Solo metadati", "Tylko metadane"),
+  documentBase: localized("Base documental", "Base documentaire", "Document base", "Base documental", "Archivio documentale", "Baza dokumentow"),
+  documentsTogetherTitle: localized("Documentacao centralizada", "Documentation centralisee", "Centralized documentation", "Documentacion centralizada", "Documentazione centralizzata", "Scentralizowana dokumentacja"),
+  documentsTogetherCopy: localized("Cada departamento guarda aqui SOPs, circulares, fichas de posto e checklists. Menos procura, mais execucao.", "Chaque departement conserve ici ses SOP, circulaires, fiches de poste et checklists. Moins de recherche, plus d'execution.", "Each department keeps SOPs, circulars, job sheets and checklists here. Less searching, more execution.", "Cada departamento guarda aqui SOP, circulares, fichas de puesto y listas. Menos busqueda, mas ejecucion.", "Ogni reparto conserva qui SOP, circolari, schede mansione e checklist. Meno ricerca, piu esecuzione.", "Kazdy dzial przechowuje tu SOP, okólniki, opisy stanowisk i listy kontrolne. Mniej szukania, wiecej dzialania."),
+  operationalHistory: localized("Historico operacional", "Historique operationnel", "Operational history", "Historial operativo", "Storico operativo", "Historia operacyjna"),
+  recentEvents: localized("Eventos recentes", "Evenements recents", "Recent events", "Eventos recientes", "Eventi recenti", "Ostatnie zdarzenia"),
+  events: localized("eventos", "evenements", "events", "eventos", "eventi", "zdarzen"),
+  noEvents: localized("Sem eventos ainda. Crie um alerta ou teste a demo.", "Aucun evenement pour le moment. Creez une alerte ou testez la demo.", "No events yet. Create an alert or test the demo.", "Aun no hay eventos. Cree una alerta o pruebe la demo.", "Nessun evento. Crea un avviso o prova la demo.", "Brak zdarzen. Utworz alert lub przetestuj demo."),
+  ownDomain: localized("Dominio proprio", "Domaine personnalise", "Custom domain", "Dominio propio", "Dominio personalizzato", "Wlasna domena"),
+  brandReady: localized("Preparado para a marca TKC", "Pret pour la marque TKC", "Ready for the TKC brand", "Preparado para la marca TKC", "Pronto per il marchio TKC", "Gotowe dla marki TKC"),
+  data: localized("Dados", "Donnees", "Data", "Datos", "Dati", "Dane"),
+  invites: localized("Convites", "Invitations", "Invitations", "Invitaciones", "Inviti", "Zaproszenia"),
+  dataValue: localized("Supabase com RLS por departamento", "Supabase avec RLS par departement", "Supabase with department RLS", "Supabase con RLS por departamento", "Supabase con RLS per reparto", "Supabase z RLS wedlug dzialu"),
+  invitesValue: localized("Email e primeiro acesso protegido", "E-mail et premier acces protege", "Email and protected first access", "Email y primer acceso protegido", "Email e primo accesso protetto", "Email i chroniony pierwszy dostep"),
+  officialSystemCopy: localized("A app e o sistema operacional oficial. Tarefas, mensagens, documentos e quartos deixam de depender de ferramentas externas.", "L'app est le systeme operationnel officiel. Les taches, messages, documents et chambres ne dependent plus d'outils externes.", "The app is the official operating system. Tasks, messages, documents and rooms no longer depend on external tools.", "La app es el sistema operativo oficial. Tareas, mensajes, documentos y habitaciones ya no dependen de herramientas externas.", "L'app e il sistema operativo ufficiale. Attivita, messaggi, documenti e camere non dipendono piu da strumenti esterni.", "Aplikacja jest oficjalnym systemem operacyjnym. Zadania, wiadomosci, dokumenty i pokoje nie zaleza juz od zewnetrznych narzedzi."),
+  accesses: localized("Acessos", "Acces", "Access", "Accesos", "Accessi", "Dostepy"),
+  operatorProfiles: localized("Perfis de operadores", "Profils des operateurs", "Operator profiles", "Perfiles de operadores", "Profili operatori", "Profile operatorow"),
+  profiles: localized("perfis", "profils", "profiles", "perfiles", "profili", "profili"),
+  name: localized("Nome", "Nom", "Name", "Nombre", "Nome", "Imie"),
+  role: localized("Papel", "Role", "Role", "Rol", "Ruolo", "Rola"),
+  authorizedDepartments: localized("Departamentos autorizados", "Departements autorises", "Authorized departments", "Departamentos autorizados", "Reparti autorizzati", "Autoryzowane dzialy"),
+  createProfileBeforeLogin: localized("Criar perfil antes do login", "Creer le profil avant la connexion", "Create profile before login", "Crear perfil antes de iniciar sesion", "Crea profilo prima dell'accesso", "Utworz profil przed logowaniem"),
+  noOperators: localized("Nenhum operador criado. A direcao define os departamentos antes do primeiro acesso.", "Aucun operateur cree. La direction definit les departements avant le premier acces.", "No operator created. Management assigns departments before first access.", "Ningun operador creado. La direccion define los departamentos antes del primer acceso.", "Nessun operatore creato. La direzione assegna i reparti prima del primo accesso.", "Nie utworzono operatora. Dyrekcja przydziela dzialy przed pierwszym dostepem."),
+  resendInvite: localized("Reenviar convite", "Renvoyer l'invitation", "Resend invitation", "Reenviar invitacion", "Reinvia invito", "Wyslij zaproszenie ponownie"),
+  accessInfo: localized("Info acesso", "Info acces", "Access info", "Info acceso", "Info accesso", "Informacje o dostepie"),
+  accountConfirmed: localized("Conta confirmada", "Compte confirme", "Account confirmed", "Cuenta confirmada", "Account confermato", "Konto potwierdzone"),
+  accountCreated: localized("Conta criada", "Compte cree", "Account created", "Cuenta creada", "Account creato", "Konto utworzone"),
+  firstLogin: localized("Primeiro login", "Premier acces", "First login", "Primer acceso", "Primo accesso", "Pierwszy dostep"),
+  correctFlow: localized("Fluxo correto", "Parcours correct", "Correct flow", "Flujo correcto", "Percorso corretto", "Prawidlowy proces"),
+  flowProfile: localized("A direcao cria o perfil e atribui os departamentos.", "La direction cree le profil et attribue les departements.", "Management creates the profile and assigns departments.", "La direccion crea el perfil y asigna los departamentos.", "La direzione crea il profilo e assegna i reparti.", "Dyrekcja tworzy profil i przydziela dzialy."),
+  flowInvite: localized("O operador recebe o convite por email.", "L'operateur recoit l'invitation par e-mail.", "The operator receives the invitation by email.", "El operador recibe la invitacion por email.", "L'operatore riceve l'invito via email.", "Operator otrzymuje zaproszenie e-mailem."),
+  flowPassword: localized("O operador cria a palavra-passe.", "L'operateur cree son mot de passe.", "The operator creates a password.", "El operador crea la contrasena.", "L'operatore crea la password.", "Operator tworzy haslo."),
+  flowDetails: localized("O operador completa os dados autorizados.", "L'operateur complete les donnees autorisees.", "The operator completes the authorized information.", "El operador completa los datos autorizados.", "L'operatore completa i dati autorizzati.", "Operator uzupelnia dozwolone dane."),
+  flowOpen: localized("A app abre apenas os departamentos permitidos.", "L'app ouvre uniquement les departements autorises.", "The app opens only authorized departments.", "La app abre solo los departamentos permitidos.", "L'app apre solo i reparti autorizzati.", "Aplikacja otwiera tylko dozwolone dzialy."),
+  departmentChat: localized("Chat por departamento", "Chat par departement", "Department chat", "Chat por departamento", "Chat per reparto", "Czat dzialu"),
+  accessApproved: localized("Acesso aprovado pela direcao", "Acces approuve par la direction", "Access approved by management", "Acceso aprobado por la direccion", "Accesso approvato dalla direzione", "Dostep zatwierdzony przez dyrekcje"),
+  operatorsWithAccess: localized("operador(es) com acesso a este departamento", "operateur(s) autorise(s) dans ce departement", "operator(s) with access to this department", "operador(es) con acceso a este departamento", "operatore/i con accesso a questo reparto", "operatorow z dostepem do tego dzialu"),
+  noAuthorizedOperator: localized("Sem operador autorizado", "Aucun operateur autorise", "No authorized operator", "Sin operador autorizado", "Nessun operatore autorizzato", "Brak autoryzowanego operatora"),
+  departmentMessagePlaceholder: localized("Mensagem para o departamento selecionado...", "Message pour le departement selectionne...", "Message for the selected department...", "Mensaje para el departamento seleccionado...", "Messaggio per il reparto selezionato...", "Wiadomosc do wybranego dzialu..."),
+  sendToDepartment: localized("Enviar ao departamento", "Envoyer au departement", "Send to department", "Enviar al departamento", "Invia al reparto", "Wyslij do dzialu"),
+  noDepartmentMessages: localized("Sem mensagens neste departamento.", "Aucun message dans ce departement.", "No messages in this department.", "No hay mensajes en este departamento.", "Nessun messaggio in questo reparto.", "Brak wiadomosci w tym dziale."),
+  authorization: localized("Autorizacao", "Autorisation", "Authorization", "Autorizacion", "Autorizzazione", "Autoryzacja"),
+  noOpenChannel: localized("Sem canal aberto", "Aucun canal ouvert", "No open channel", "Sin canal abierto", "Nessun canale aperto", "Brak otwartego kanalu"),
+  authorizationCopy: localized("O operador ve apenas o chat dos departamentos atribuidos pela direcao. Em producao, a regra e protegida por RLS no Supabase.", "L'operateur voit uniquement le chat des departements attribues par la direction. En production, cette regle est protegee par RLS dans Supabase.", "The operator sees only chats for departments assigned by management. In production, this rule is protected by Supabase RLS.", "El operador solo ve el chat de los departamentos asignados por la direccion. En produccion, la regla esta protegida por RLS en Supabase.", "L'operatore vede solo le chat dei reparti assegnati dalla direzione. In produzione, la regola e protetta da RLS in Supabase.", "Operator widzi tylko czaty dzialow przydzielonych przez dyrekcje. W produkcji zasada jest chroniona przez RLS w Supabase."),
+  generalChat: localized("Chat geral", "Chat general", "General chat", "Chat general", "Chat generale", "Czat ogolny"),
+  ideasDecisions: localized("Ideias e decisoes", "Idees et decisions", "Ideas and decisions", "Ideas y decisiones", "Idee e decisioni", "Pomysly i decyzje"),
+  messages: localized("mensagens", "messages", "messages", "mensajes", "messaggi", "wiadomosci"),
+  ideaPlaceholder: localized("Trocar ideia, registar decisao, nota de direcao...", "Partager une idee, enregistrer une decision, note de direction...", "Share an idea, record a decision, management note...", "Compartir idea, registrar decision, nota de direccion...", "Condividi un'idea, registra una decisione, nota della direzione...", "Podziel sie pomyslem, zapisz decyzje, notatke dyrekcji..."),
+  add: localized("Adicionar", "Ajouter", "Add", "Agregar", "Aggiungi", "Dodaj"),
+  noGeneralMessages: localized("Sem mensagens. Use este espaco para ideias, decisoes e notas gerais.", "Aucun message. Utilisez cet espace pour les idees, decisions et notes generales.", "No messages. Use this space for ideas, decisions and general notes.", "Sin mensajes. Use este espacio para ideas, decisiones y notas generales.", "Nessun messaggio. Usa questo spazio per idee, decisioni e note generali.", "Brak wiadomosci. Uzyj tego miejsca na pomysly, decyzje i notatki ogolne."),
+  internalChat: localized("Chat interno", "Chat interne", "Internal chat", "Chat interno", "Chat interna", "Czat wewnetrzny"),
+  autonomousApp: localized("App autonoma", "App autonome", "Standalone app", "App autonoma", "App autonoma", "Samodzielna aplikacja"),
+  internalChatCopy: localized("Tarefas, comentarios, ideias e conversas ficam na app TKC, com acesso definido pela direcao.", "Les taches, commentaires, idees et conversations restent dans l'app TKC, avec un acces defini par la direction.", "Tasks, comments, ideas and conversations stay in the TKC app, with access set by management.", "Tareas, comentarios, ideas y conversaciones quedan en la app TKC, con acceso definido por la direccion.", "Attivita, commenti, idee e conversazioni restano nell'app TKC, con accesso definito dalla direzione.", "Zadania, komentarze, pomysly i rozmowy pozostaja w aplikacji TKC, z dostepem ustalonym przez dyrekcje."),
+  accessInformation: localized("Informacao de acesso", "Informations d'acces", "Access information", "Informacion de acceso", "Informazioni di accesso", "Informacje o dostepie"),
+  operatorAccess: localized("Acesso operador", "Acces operateur", "Operator access", "Acceso operador", "Accesso operatore", "Dostep operatora"),
+  close: localized("Fechar", "Fermer", "Close", "Cerrar", "Chiudi", "Zamknij"),
+  account: localized("Conta", "Compte", "Account", "Cuenta", "Account", "Konto"),
+  invitations: localized("Convites", "Invitations", "Invitations", "Invitaciones", "Inviti", "Zaproszenia"),
+  lastInvite: localized("Ultimo convite", "Derniere invitation", "Last invitation", "Ultima invitacion", "Ultimo invito", "Ostatnie zaproszenie"),
+  accountCreatedOn: localized("Conta criada em", "Compte cree le", "Account created on", "Cuenta creada el", "Account creato il", "Konto utworzone"),
+  notSentYet: localized("Ainda nao enviado", "Pas encore envoye", "Not sent yet", "Aun no enviado", "Non ancora inviato", "Jeszcze nie wyslano"),
+  pendingStatus: localized("Pendente", "En attente", "Pending", "Pendiente", "In attesa", "Oczekuje"),
+  accessModalCopy: localized("Se a conta ja existir, reenviar o convite serve para repor o acesso ou concluir o primeiro login, sem criar uma segunda conta.", "Si le compte existe deja, renvoyer l'invitation sert a retablir l'acces ou terminer le premier acces, sans creer un second compte.", "If the account already exists, resending the invitation restores access or completes first login without creating a second account.", "Si la cuenta ya existe, reenviar la invitacion restablece el acceso o completa el primer inicio sin crear otra cuenta.", "Se l'account esiste gia, reinviare l'invito ripristina l'accesso o completa il primo accesso senza creare un secondo account.", "Jesli konto juz istnieje, ponowne wyslanie zaproszenia przywraca dostep lub konczy pierwsze logowanie bez tworzenia drugiego konta."),
+  markAccountCreated: localized("Marcar conta criada", "Marquer le compte comme cree", "Mark account created", "Marcar cuenta creada", "Segna account creato", "Oznacz konto jako utworzone"),
+  returnLogin: localized("Voltar ao login", "Retour a la connexion", "Back to login", "Volver al acceso", "Torna all'accesso", "Wroc do logowania"),
+  taskState: localized("Estado da tarefa", "Etat de la tache", "Task status", "Estado de la tarea", "Stato attivita", "Status zadania"),
+  photoType: localized("Tipo de foto", "Type de photo", "Photo type", "Tipo de foto", "Tipo di foto", "Typ zdjecia"),
+  addComment: localized("Adicionar comentario", "Ajouter un commentaire", "Add comment", "Agregar comentario", "Aggiungi commento", "Dodaj komentarz"),
+  ready: localized("Pronto", "Pret", "Ready", "Listo", "Pronto", "Gotowe"),
+  syncing: localized("A sincronizar", "Synchronisation", "Syncing", "Sincronizando", "Sincronizzazione", "Synchronizacja"),
+  syncedSupabase: localized("Sincronizado com Supabase", "Synchronise avec Supabase", "Synced with Supabase", "Sincronizado con Supabase", "Sincronizzato con Supabase", "Zsynchronizowano z Supabase"),
+  syncError: localized("Erro de sincronizacao", "Erreur de synchronisation", "Sync error", "Error de sincronizacion", "Errore di sincronizzazione", "Blad synchronizacji"),
+  savingTask: localized("A guardar tarefa", "Enregistrement de la tache", "Saving task", "Guardando tarea", "Salvataggio attivita", "Zapisywanie zadania"),
+  saveTaskError: localized("Erro ao guardar tarefa", "Erreur d'enregistrement de la tache", "Error saving task", "Error al guardar tarea", "Errore nel salvare l'attivita", "Blad zapisu zadania"),
+  savedApp: localized("Guardado na app", "Enregistre dans l'app", "Saved in app", "Guardado en la app", "Salvato nell'app", "Zapisano w aplikacji"),
+  exampleLoaded: localized("Exemplo carregado", "Exemple charge", "Example loaded", "Ejemplo cargado", "Esempio caricato", "Przyklad wczytany"),
+  sendingPhoto: localized("A enviar foto", "Envoi de la photo", "Sending photo", "Enviando foto", "Invio foto", "Wysylanie zdjecia"),
+  sendPhotoError: localized("Erro ao enviar foto", "Erreur d'envoi de la photo", "Error sending photo", "Error al enviar foto", "Errore invio foto", "Blad wysylania zdjecia"),
+  sendingDocument: localized("A enviar documento", "Envoi du document", "Sending document", "Enviando documento", "Invio documento", "Wysylanie dokumentu"),
+  sendDocumentError: localized("Erro ao enviar documento", "Erreur d'envoi du document", "Error sending document", "Error al enviar documento", "Errore invio documento", "Blad wysylania dokumentu"),
+  productionStructureProtected: localized("A estrutura de producao nao e apagada pela app", "La structure de production n'est pas supprimee par l'app", "The production structure is not deleted by the app", "La estructura de produccion no se elimina desde la app", "La struttura di produzione non viene eliminata dall'app", "Struktura produkcyjna nie jest usuwana przez aplikacje"),
+  generatingTasks: localized("A gerar tarefas Housekeeping", "Generation des taches Housekeeping", "Generating Housekeeping tasks", "Generando tareas Housekeeping", "Generazione attivita Housekeeping", "Generowanie zadan Housekeeping"),
+  generateTasksError: localized("Erro ao gerar tarefas", "Erreur de generation des taches", "Error generating tasks", "Error al generar tareas", "Errore nella generazione delle attivita", "Blad generowania zadan"),
+  sendingInvite: localized("A enviar convite", "Envoi de l'invitation", "Sending invitation", "Enviando invitacion", "Invio invito", "Wysylanie zaproszenia"),
+  resendingInvite: localized("A reenviar convite", "Renvoi de l'invitation", "Resending invitation", "Reenviando invitacion", "Reinvio invito", "Ponowne wysylanie zaproszenia"),
+  inviteSent: localized("Convite enviado", "Invitation envoyee", "Invitation sent", "Invitacion enviada", "Invito inviato", "Zaproszenie wyslane"),
+  invitePrepared: localized("Convite preparado", "Invitation preparee", "Invitation prepared", "Invitacion preparada", "Invito preparato", "Zaproszenie przygotowane"),
+  inviteError: localized("Erro no convite", "Erreur d'invitation", "Invitation error", "Error de invitacion", "Errore invito", "Blad zaproszenia"),
+  accountActive: localized("Conta ja ativa", "Compte deja actif", "Account already active", "Cuenta ya activa", "Account gia attivo", "Konto jest juz aktywne"),
+  checkingSession: localized("A verificar sessao", "Verification de la session", "Checking session", "Verificando sesion", "Verifica sessione", "Sprawdzanie sesji"),
+  connectingSupabase: localized("A ligar a app TKC Capital Ops ao Supabase.", "Connexion de l'app TKC Capital Ops a Supabase.", "Connecting the TKC Capital Ops app to Supabase.", "Conectando la app TKC Capital Ops a Supabase.", "Connessione dell'app TKC Capital Ops a Supabase.", "Laczenie aplikacji TKC Capital Ops z Supabase."),
+  profileNoAccess: localized("Perfil sem acesso ativo", "Profil sans acces actif", "Profile without active access", "Perfil sin acceso activo", "Profilo senza accesso attivo", "Profil bez aktywnego dostepu"),
+  profileMissing: localized("Perfil operacional em falta", "Profil operationnel manquant", "Operational profile missing", "Falta perfil operativo", "Profilo operativo mancante", "Brak profilu operacyjnego"),
+  contactManagement: localized("Contacte a direcao para ativar o seu perfil operacional.", "Contactez la direction pour activer votre profil operationnel.", "Contact management to activate your operational profile.", "Contacte con la direccion para activar su perfil operativo.", "Contatta la direzione per attivare il profilo operativo.", "Skontaktuj sie z dyrekcja, aby aktywowac profil operacyjny."),
+  oldSiteValue: localized("TKC Rooms legado", "TKC Rooms (ancien)", "Legacy TKC Rooms", "TKC Rooms anterior", "TKC Rooms precedente", "Poprzedni TKC Rooms"),
+  assignedToday: localized("Atribuidos hoje", "Affectes aujourd'hui", "Assigned today", "Asignados hoy", "Assegnati oggi", "Przydzieleni dzisiaj"),
+  assignmentDate: localized("Atribuicao do dia", "Affectation du jour", "Daily assignment", "Asignacion del dia", "Assegnazione del giorno", "Dzisiejszy przydzial"),
+  noAssignedOperator: localized("Sem operador atribuido", "Aucun operateur affecte", "No assigned operator", "Sin operador asignado", "Nessun operatore assegnato", "Brak przypisanego operatora"),
+  noActiveRoomOperators: localized("Crie e ative primeiro os operadores do departamento Housekeeping.", "Creez et activez d'abord les operateurs du service Etages.", "Create and activate Housekeeping operators first.", "Cree y active primero los operadores de Pisos.", "Crea e attiva prima gli operatori Camere.", "Najpierw utworz i aktywuj operatorow dzialu Pokoje."),
+  dailyAccessNotice: localized("Os operadores veem apenas os quartos dos binomes que lhes forem atribuidos hoje, bem como as tarefas e avarias desses quartos.", "Les operateurs voient uniquement les chambres des binomes qui leur sont affectes aujourd'hui, ainsi que les taches et pannes de ces chambres.", "Operators only see rooms in teams assigned to them today, plus tasks and faults for those rooms.", "Los operadores solo ven las habitaciones de los equipos asignados hoy, junto con sus tareas y averias.", "Gli operatori vedono solo le camere dei gruppi assegnati oggi, con le relative attivita e guasti.", "Operatorzy widza tylko pokoje w zespolach przydzielonych im dzisiaj oraz ich zadania i usterki."),
+  savingAssignments: localized("A guardar atribuicoes", "Enregistrement des affectations", "Saving assignments", "Guardando asignaciones", "Salvataggio assegnazioni", "Zapisywanie przydzialow"),
+  assignmentSaved: localized("Atribuicoes guardadas", "Affectations enregistrees", "Assignments saved", "Asignaciones guardadas", "Assegnazioni salvate", "Przydzialy zapisane"),
+  assignmentError: localized("Erro ao guardar atribuicoes", "Erreur d'enregistrement des affectations", "Error saving assignments", "Error al guardar asignaciones", "Errore nel salvataggio delle assegnazioni", "Blad zapisu przydzialow"),
+  assignedRoomsOnly: localized("Apenas os quartos que lhe foram atribuidos hoje.", "Uniquement les chambres qui vous sont affectees aujourd'hui.", "Only rooms assigned to you today.", "Solo las habitaciones que le han sido asignadas hoy.", "Solo le camere assegnate oggi.", "Tylko pokoje przydzielone dzisiaj."),
+  selectAssignedRoom: localized("Selecionar quarto atribuido", "Selectionner une chambre affectee", "Select assigned room", "Seleccionar habitacion asignada", "Seleziona camera assegnata", "Wybierz przypisany pokoj"),
+  accountPending: localized("Acesso pendente", "Acces en attente", "Access pending", "Acceso pendiente", "Accesso in attesa", "Dostep oczekuje"),
+  invitePending: localized("Primeiro login pendente", "Premier acces en attente", "First login pending", "Primer acceso pendiente", "Primo accesso in attesa", "Pierwszy dostep oczekuje"),
+  profileMissingDetail: localized("A conta existe, mas ainda nao tem um perfil operacional TKC.", "Le compte existe, mais aucun profil operationnel TKC ne lui est encore associe.", "The account exists, but it does not yet have a TKC operational profile.", "La cuenta existe, pero aun no tiene un perfil operativo TKC.", "L'account esiste, ma non ha ancora un profilo operativo TKC.", "Konto istnieje, ale nie ma jeszcze profilu operacyjnego TKC."),
+  profileBlockedDetail: localized("Este perfil ainda nao esta ativo. Contacte a direcao.", "Ce profil n'est pas encore actif. Contactez la direction.", "This profile is not active yet. Contact management.", "Este perfil aun no esta activo. Contacte con la direccion.", "Questo profilo non e ancora attivo. Contatta la direzione.", "Ten profil nie jest jeszcze aktywny. Skontaktuj sie z dyrekcja."),
+  taskUpdateError: localized("Erro ao atualizar tarefa", "Erreur de mise a jour de la tache", "Error updating task", "Error al actualizar la tarea", "Errore nell'aggiornamento dell'attivita", "Blad aktualizacji zadania"),
+  commentSaveError: localized("Erro ao guardar comentario", "Erreur d'enregistrement du commentaire", "Error saving comment", "Error al guardar el comentario", "Errore nel salvataggio del commento", "Blad zapisu komentarza"),
+  messageSendError: localized("Erro ao enviar mensagem", "Erreur d'envoi du message", "Error sending message", "Error al enviar el mensaje", "Errore nell'invio del messaggio", "Blad wysylania wiadomosci"),
+  roomUpdateError: localized("Erro ao atualizar quarto", "Erreur de mise a jour de la chambre", "Error updating room", "Error al actualizar la habitacion", "Errore nell'aggiornamento della camera", "Blad aktualizacji pokoju"),
+  demoNote: localized("Demo: a TV nao funciona. Enviar um tecnico quando possivel.", "Demo : la TV ne fonctionne pas. Envoyer un technicien des que possible.", "Demo: the TV is not working. Send a technician when possible.", "Demo: la TV no funciona. Enviar un tecnico cuando sea posible.", "Demo: la TV non funziona. Inviare un tecnico appena possibile.", "Demo: telewizor nie dziala. Wyslac technika, gdy bedzie to mozliwe."),
+  demoComment: localized("Controlo da rececao: avisar o cliente se o quarto ficar bloqueado.", "Controle reception : prevenir le client si la chambre reste bloquee.", "Reception check: notify the guest if the room remains blocked.", "Control de recepcion: avisar al cliente si la habitacion queda bloqueada.", "Controllo reception: avvisare il cliente se la camera resta bloccata.", "Kontrola recepcji: powiadomic goscia, jesli pokoj pozostanie zablokowany."),
+  fileStoredSupabase: localized("O ficheiro sera guardado no Supabase Storage.", "Le fichier sera enregistre dans Supabase Storage.", "The file will be stored in Supabase Storage.", "El archivo se guardara en Supabase Storage.", "Il file verra salvato in Supabase Storage.", "Plik zostanie zapisany w Supabase Storage."),
+  largeFilePreview: localized("Ficheiro grande: apenas metadados na pre-visualizacao.", "Fichier volumineux : metadonnees uniquement dans l'apercu.", "Large file: metadata only in preview.", "Archivo grande: solo metadatos en la vista previa.", "File grande: solo metadati nell'anteprima.", "Duzy plik: tylko metadane w podgladzie."),
+};
+
 const DEPARTMENT_OPTIONS = [
   { id: "reception", label: "Reception" },
   { id: "housekeeping", label: "Housekeeping" },
@@ -459,38 +621,50 @@ const initialDocForm = {
   storageNote: ""
 };
 
+function todayInParis() {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Paris",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 function buildHousekeepingPlan() {
   return {
     source: "tkc_rooms_integrated",
     legacyUrl: TKC_ROOMS_LEGACY_URL,
     date: "",
+    assignmentDate: todayInParis(),
     binomes: [
       {
         id: "binome_a",
         label: "Binome A",
         zone: "Etage 1",
-        members: ["Operador 1", "Operador 2"],
+        members: [],
         rooms: buildFloorRooms(1, 18)
       },
       {
         id: "binome_b",
         label: "Binome B",
         zone: "Etage 2",
-        members: ["Operador 3", "Operador 4"],
+        members: [],
         rooms: buildFloorRooms(2, 18)
       },
       {
         id: "binome_c",
         label: "Binome C",
         zone: "Etage 3",
-        members: ["Operador 5", "Operador 6"],
+        members: [],
         rooms: buildFloorRooms(3, 18)
       },
       {
         id: "binome_d",
         label: "Binome D",
         zone: "Etage 4",
-        members: ["Operador 7", "Operador 8"],
+        members: [],
         rooms: buildFloorRooms(4, 20)
       }
     ]
@@ -532,8 +706,8 @@ export default function HomePage() {
   const [docForm, setDocForm] = useState(initialDocForm);
   const [accessOperatorId, setAccessOperatorId] = useState(null);
   const [ideaText, setIdeaText] = useState("");
-  const [syncState, setSyncState] = useState("Pronto");
-  const [inviteState, setInviteState] = useState("Pronto");
+  const [syncState, setSyncState] = useState("ready");
+  const [inviteState, setInviteState] = useState("ready");
   const [uiLanguage, setUiLanguage] = useState("fr");
   const [activeOperatorId, setActiveOperatorId] = useState("");
   const [domainLabel, setDomainLabel] = useState("app.tkccapital.pt");
@@ -550,19 +724,19 @@ export default function HomePage() {
     const authUserId = authUserIdRef.current;
     if (!supabase || !authUserId) return null;
 
-    if (!silent) setSyncState("A sincronizar");
+    if (!silent) setSyncState("syncing");
     try {
       const workspace = await loadHotelWorkspace(supabase, authUserId);
       if (!workspace.profile) {
         setCurrentProfile(null);
         setAuthMode("profile_missing");
-        setWorkspaceError("A conta existe, mas ainda nao tem um perfil operacional TKC.");
+        setWorkspaceError("profileMissingDetail");
         return null;
       }
       if (workspace.profile.status !== "active" || workspace.profile.account_status !== "active") {
         setCurrentProfile(workspace.profile);
         setAuthMode("blocked");
-        setWorkspaceError("Este perfil ainda nao esta ativo. Contacte a direcao.");
+        setWorkspaceError("profileBlockedDetail");
         return null;
       }
 
@@ -594,11 +768,11 @@ export default function HomePage() {
       );
       setWorkspaceError("");
       setAuthMode("authenticated");
-      setSyncState("Sincronizado com Supabase");
+      setSyncState("syncedSupabase");
       return workspace;
     } catch (error) {
-      setWorkspaceError(error instanceof Error ? error.message : "Erro de sincronizacao");
-      setSyncState("Erro de sincronizacao");
+      setWorkspaceError(error instanceof Error ? error.message : "syncError");
+      setSyncState("syncError");
       return null;
     }
   }, []);
@@ -726,23 +900,38 @@ export default function HomePage() {
   const activeLanguage = currentProfile?.language || activeOperator?.language || uiLanguage;
   const isProduction = authMode === "authenticated";
   const isDirection = Boolean(currentProfile?.isDirection) || authMode === "preview";
+  const isRoomOperator = Boolean(currentProfile?.isRoomOperator);
   const availableDepartments = currentProfile && !currentProfile.isDirection
     ? DEPARTMENT_OPTIONS.filter((department) => currentProfile.departments.includes(department.id))
     : DEPARTMENT_OPTIONS;
+  const taskDepartments = isRoomOperator
+    ? DEPARTMENT_OPTIONS.filter((department) => ["housekeeping", "maintenance"].includes(department.id))
+    : availableDepartments;
+  const taskEventTypes = isRoomOperator
+    ? ["room_cleaning", "room_ready", "room_blocked", "maintenance_created"]
+    : Object.keys(EVENT_LABEL_TRANSLATIONS);
   const canUseHousekeeping = isDirection || availableDepartments.some((department) => department.id === "housekeeping");
   const docsForDepartment = departmentDocs[docForm.department] || [];
   const housekeepingStats = getHousekeepingStats(housekeepingPlan);
   const t = (key) => translate(activeLanguage, key);
+  const assignedRooms = housekeepingPlan.binomes.flatMap((binome) => binome.rooms);
+  const roomOperators = operators.filter((operator) =>
+    operator.status === "active" &&
+    operator.accountStatus === "active" &&
+    ["operator", "supervisor"].includes(operator.role) &&
+    (operator.departments || []).includes("housekeeping")
+  );
 
   if (authMode === "checking") {
-    return <AccessState title="A verificar sessao" message="A ligar a app TKC Capital Ops ao Supabase." />;
+    return <AccessState title={t("checkingSession")} message={t("connectingSupabase")} returnLabel={t("returnLogin")} />;
   }
 
   if (authMode === "profile_missing" || authMode === "blocked") {
     return (
       <AccessState
-        title={authMode === "blocked" ? "Perfil sem acesso ativo" : "Perfil operacional em falta"}
-        message={workspaceError || "Contacte a direcao para ativar o seu perfil operacional."}
+        title={authMode === "blocked" ? t("profileNoAccess") : t("profileMissing")}
+        message={workspaceError ? t(workspaceError) : t("contactManagement")}
+        returnLabel={t("returnLogin")}
       />
     );
   }
@@ -761,23 +950,27 @@ export default function HomePage() {
     };
 
     if (!payload.note) return;
+    if (isRoomOperator && !assignedRooms.some((room) => room.room === payload.room)) {
+      setWorkspaceError("assignedRoomsOnly");
+      return;
+    }
 
     if (isProduction && supabaseRef.current && currentProfile?.id) {
-      setSyncState("A guardar tarefa");
+      setSyncState("savingTask");
       try {
         await createTask(supabaseRef.current, payload, currentProfile.id);
         await refreshWorkspace();
         setForm({ ...initialForm, department: payload.department });
       } catch (error) {
-        setSyncState("Erro ao guardar tarefa");
-        setWorkspaceError(error instanceof Error ? error.message : "Erro ao guardar tarefa");
+        setSyncState("saveTaskError");
+        setWorkspaceError(error instanceof Error ? error.message : "saveTaskError");
       }
       return;
     }
 
     addEvent(payload);
     setForm({ ...initialForm, department: payload.department });
-    setSyncState("Guardado na app");
+    setSyncState("savedApp");
   }
 
   function addEvent(payload) {
@@ -786,7 +979,16 @@ export default function HomePage() {
 
   function handleChange(event) {
     const { id, value } = event.target;
-    setForm((current) => ({ ...current, [id]: value }));
+    setForm((current) => {
+      if (isRoomOperator && id === "department") {
+        return {
+          ...current,
+          department: value,
+          eventType: value === "maintenance" ? "maintenance_created" : "room_cleaning",
+        };
+      }
+      return { ...current, [id]: value };
+    });
   }
 
   async function changeLanguage(language) {
@@ -796,7 +998,7 @@ export default function HomePage() {
         await updateOperatorLanguage(supabaseRef.current, currentProfile.id, language);
         setCurrentProfile((profile) => profile ? { ...profile, language } : profile);
       } catch (error) {
-        setWorkspaceError(error instanceof Error ? error.message : "Erro ao guardar idioma");
+        setWorkspaceError(error instanceof Error ? error.message : "syncError");
       }
       return;
     }
@@ -816,23 +1018,23 @@ export default function HomePage() {
       eventType: "maintenance_created",
       room: "204",
       priority: "urgent",
-      note: "Demo: TV nao funciona. Enviar tecnico quando possivel.",
+      note: t("demoNote"),
       status: "open",
       comments: [
         {
           id: crypto.randomUUID(),
-          text: "Controle reception: prevenir o cliente se o quarto ficar bloqueado.",
+          text: t("demoComment"),
           createdAt: new Date().toISOString()
         }
       ],
       createdAt: new Date().toISOString()
     });
-    setSyncState("Exemplo carregado");
+    setSyncState("exampleLoaded");
   }
 
   function resetDemo() {
     setEvents([]);
-    setSyncState("Pronto");
+    setSyncState("ready");
   }
 
   async function updateTaskStatus(id, status) {
@@ -841,7 +1043,7 @@ export default function HomePage() {
         await updateTask(supabaseRef.current, id, { status });
         await refreshWorkspace({ silent: true });
       } catch (error) {
-        setWorkspaceError(error instanceof Error ? error.message : "Erro ao atualizar tarefa");
+        setWorkspaceError(error instanceof Error ? error.message : "taskUpdateError");
       }
       return;
     }
@@ -859,7 +1061,7 @@ export default function HomePage() {
         await createTaskComment(supabaseRef.current, id, cleanText, currentProfile.id);
         await refreshWorkspace({ silent: true });
       } catch (error) {
-        setWorkspaceError(error instanceof Error ? error.message : "Erro ao guardar comentario");
+        setWorkspaceError(error instanceof Error ? error.message : "commentSaveError");
       }
       return;
     }
@@ -945,7 +1147,7 @@ export default function HomePage() {
 
   async function sendOperatorInvite(operator, mode = "resend") {
     const requestId = crypto.randomUUID();
-    setInviteState(mode === "resend" ? "A reenviar convite" : "A enviar convite");
+    setInviteState(mode === "resend" ? "resendingInvite" : "sendingInvite");
     setOperators((current) =>
       current.map((item) =>
         item.id === operator.id ? { ...item, inviteStatus: "sending" } : item
@@ -985,9 +1187,9 @@ export default function HomePage() {
             : item
         )
       );
-      setInviteState(inviteStatus === "sent" ? "Convite enviado" : inviteStatus === "dry_run" ? "Convite preparado" : "Erro no convite");
+      setInviteState(inviteStatus === "sent" ? "inviteSent" : inviteStatus === "dry_run" ? "invitePrepared" : "inviteError");
       if (response.status === 409 && result.error === "account_already_active") {
-        setInviteState("Conta ja ativa");
+        setInviteState("accountActive");
       }
       if (response.ok && isProduction) await refreshWorkspace({ silent: true });
     } catch {
@@ -996,7 +1198,7 @@ export default function HomePage() {
           item.id === operator.id ? { ...item, inviteStatus: "error" } : item
         )
       );
-      setInviteState("Erro no convite");
+      setInviteState("inviteError");
     }
   }
 
@@ -1032,7 +1234,7 @@ export default function HomePage() {
         setChatDraft("");
         await refreshWorkspace({ silent: true });
       } catch (error) {
-        setWorkspaceError(error instanceof Error ? error.message : "Erro ao enviar mensagem");
+        setWorkspaceError(error instanceof Error ? error.message : "messageSendError");
       }
       return;
     }
@@ -1040,7 +1242,7 @@ export default function HomePage() {
     const message = {
       id: crypto.randomUUID(),
       department: activeChatDepartment,
-      author: "Direcao",
+      author: departmentLabel("direction", activeLanguage),
       text,
       createdAt: new Date().toISOString()
     };
@@ -1057,7 +1259,7 @@ export default function HomePage() {
       const task = events.find((event) => event.id === id);
       if (!task) return;
       try {
-        setSyncState("A enviar foto");
+        setSyncState("sendingPhoto");
         await uploadTaskPhoto(
           supabaseRef.current,
           task,
@@ -1067,8 +1269,8 @@ export default function HomePage() {
         );
         await refreshWorkspace();
       } catch (error) {
-        setWorkspaceError(error instanceof Error ? error.message : "Erro ao enviar foto");
-        setSyncState("Erro ao enviar foto");
+        setWorkspaceError(error instanceof Error ? error.message : "sendPhotoError");
+        setSyncState("sendPhotoError");
       }
       return;
     }
@@ -1119,7 +1321,7 @@ export default function HomePage() {
         ...current,
         ...base,
         fileData: "",
-        storageNote: isProduction ? "O ficheiro sera guardado no Supabase Storage." : "Ficheiro grande: apenas metadata na pre-visualizacao."
+        storageNote: isProduction ? t("fileStoredSupabase") : t("largeFilePreview")
       }));
       return;
     }
@@ -1142,7 +1344,7 @@ export default function HomePage() {
 
     if (isProduction && supabaseRef.current && currentProfile?.id && docFile) {
       try {
-        setSyncState("A enviar documento");
+        setSyncState("sendingDocument");
         await uploadDepartmentDocument(
           supabaseRef.current,
           { ...docForm, title, note: docForm.note.trim() },
@@ -1154,8 +1356,8 @@ export default function HomePage() {
         event.currentTarget.reset();
         await refreshWorkspace();
       } catch (error) {
-        setWorkspaceError(error instanceof Error ? error.message : "Erro ao enviar documento");
-        setSyncState("Erro ao enviar documento");
+        setWorkspaceError(error instanceof Error ? error.message : "sendDocumentError");
+        setSyncState("sendDocumentError");
       }
       return;
     }
@@ -1183,7 +1385,7 @@ export default function HomePage() {
         await updateHousekeepingRoom(supabaseRef.current, roomId, status, currentProfile.id);
         await refreshWorkspace({ silent: true });
       } catch (error) {
-        setWorkspaceError(error instanceof Error ? error.message : "Erro ao atualizar quarto");
+        setWorkspaceError(error instanceof Error ? error.message : "roomUpdateError");
       }
       return;
     }
@@ -1208,9 +1410,28 @@ export default function HomePage() {
     }));
   }
 
+  async function updateBinomeAssignments(binomeId, operatorIds) {
+    if (!isDirection || !isProduction || !supabaseRef.current) return;
+    try {
+      setSyncState("savingAssignments");
+      await setHousekeepingBinomeAssignments(
+        supabaseRef.current,
+        binomeId,
+        housekeepingPlan.assignmentDate,
+        operatorIds
+      );
+      await refreshWorkspace({ silent: true });
+      setSyncState("assignmentSaved");
+      setWorkspaceError("");
+    } catch (error) {
+      setSyncState("assignmentError");
+      setWorkspaceError(error instanceof Error ? error.message : "assignmentError");
+    }
+  }
+
   function resetHousekeepingPlan() {
     if (isProduction) {
-      setSyncState("A estrutura de producao nao e apagada pela app");
+      setSyncState("productionStructureProtected");
       return;
     }
     setHousekeepingPlan(buildHousekeepingPlan());
@@ -1236,12 +1457,12 @@ export default function HomePage() {
     if (tasks.length === 0) return;
     if (isProduction && supabaseRef.current && currentProfile?.id) {
       try {
-        setSyncState("A gerar tarefas Housekeeping");
+        setSyncState("generatingTasks");
         await createTasks(supabaseRef.current, tasks, currentProfile.id);
         await refreshWorkspace();
       } catch (error) {
-        setWorkspaceError(error instanceof Error ? error.message : "Erro ao gerar tarefas");
-        setSyncState("Erro ao gerar tarefas");
+        setWorkspaceError(error instanceof Error ? error.message : "generateTasksError");
+        setSyncState("generateTasksError");
       }
       return;
     }
@@ -1275,10 +1496,10 @@ export default function HomePage() {
             {activeOperator && (
               <button className="secondary" type="button" onClick={() => setActiveOperatorId("")}>{t("exitProfile")}</button>
             )}
-            {!activeOperator && authMode === "preview" && <small>Preview local</small>}
+            {!activeOperator && authMode === "preview" && <small>{t("previewLocal")}</small>}
           </div>
-          <div className="domain-pill" title="Dominio alvo">
-            <span>Dominio</span>
+          <div className="domain-pill" title={t("targetDomain")}>
+            <span>{t("domain")}</span>
             <strong>{domainLabel}</strong>
           </div>
         </div>
@@ -1291,7 +1512,7 @@ export default function HomePage() {
             <h2>{t("heroTitle")}</h2>
             <p>{t("heroCopy")}</p>
           </div>
-          <div className="status-grid" aria-label="Resumo operacional">
+          <div className="status-grid" aria-label={t("operationalSummary")}>
             <article>
               <span>{t("roomsDone")}</span>
               <strong>{housekeepingStats.done}/{housekeepingStats.total}</strong>
@@ -1307,18 +1528,21 @@ export default function HomePage() {
             <article>
               <span>{t("openTasks")}</span>
               <strong>{stats.openTasks}</strong>
-              <small>{syncState}</small>
+              <small>{t(syncState)}</small>
             </article>
           </div>
         </section>
 
-        {workspaceError && <div className="sync-error">{workspaceError}</div>}
+        {workspaceError && <div className="sync-error">{t(workspaceError)}</div>}
 
         {canUseHousekeeping && (
           <HousekeepingBoard
             plan={housekeepingPlan}
             stats={housekeepingStats}
             language={activeLanguage}
+            isDirection={isDirection}
+            operators={roomOperators}
+            onAssignmentsChange={updateBinomeAssignments}
             onCreateTasks={createHousekeepingTasks}
             onReset={resetHousekeepingPlan}
             onStatusChange={updateHousekeepingRoomStatus}
@@ -1330,72 +1554,81 @@ export default function HomePage() {
           <div className="panel">
             <div className="panel-head">
               <div>
-                <p className="eyebrow">Evento operacional</p>
-                <h2>Criar alerta</h2>
+                <p className="eyebrow">{t("operationalEvent")}</p>
+                <h2>{t("createAlert")}</h2>
               </div>
-              {!isProduction && <button className="secondary" onClick={resetDemo} type="button">Limpar demo</button>}
+              {!isProduction && <button className="secondary" onClick={resetDemo} type="button">{t("clearDemo")}</button>}
             </div>
 
             <form className="event-form" onSubmit={handleSubmit}>
               <label>
-                Departamento
+                {t("department")}
                 <select id="department" value={form.department} onChange={handleChange} required>
-                  {availableDepartments.map((department) => (
+                  {taskDepartments.map((department) => (
                     <option key={department.id} value={department.id}>{departmentLabel(department.id, activeLanguage)}</option>
                   ))}
                 </select>
               </label>
 
               <label>
-                Tipo de evento
+                {t("eventType")}
                 <select id="eventType" value={form.eventType} onChange={handleChange} required>
-                  {Object.keys(EVENT_LABEL_TRANSLATIONS).map((eventType) => (
+                  {taskEventTypes.map((eventType) => (
                     <option key={eventType} value={eventType}>{eventLabel(eventType, activeLanguage)}</option>
                   ))}
                 </select>
               </label>
 
               <label>
-                Quarto / zona
-                <input id="room" value={form.room} onChange={handleChange} placeholder="204, lobby, bar..." maxLength={32} />
+                {t("roomZone")}
+                {isRoomOperator ? (
+                  <select id="room" value={form.room} onChange={handleChange} required>
+                    <option value="">{t("selectAssignedRoom")}</option>
+                    {assignedRooms.map((room) => (
+                      <option key={room.id} value={room.room}>{room.room}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input id="room" value={form.room} onChange={handleChange} placeholder="204, lobby, bar..." maxLength={32} />
+                )}
               </label>
 
               <label>
-                Prioridade
+                {t("priority")}
                 <select id="priority" value={form.priority} onChange={handleChange} required>
-                  <option value="normal">Normal</option>
-                  <option value="urgent">Urgente</option>
-                  <option value="blocked">Bloqueante</option>
+                  <option value="normal">{t("normal")}</option>
+                  <option value="urgent">{t("urgent")}</option>
+                  <option value="blocked">{t("blocking")}</option>
                 </select>
               </label>
 
               <label className="full">
-                Nota operacional
+                {t("operationalNote")}
                 <textarea
                   id="note"
                   rows={4}
                   value={form.note}
                   onChange={handleChange}
-                  placeholder="Ex: TV nao funciona, quarto pronto para controlo, falta stock..."
+                  placeholder={t("notePlaceholder")}
                   required
                 />
               </label>
 
               <div className="actions full">
-                <button type="submit">Guardar e enviar alerta</button>
-                {!isProduction && <button className="secondary" onClick={runDemo} type="button">Carregar exemplo</button>}
+                <button type="submit">{t("saveSendAlert")}</button>
+                {!isProduction && <button className="secondary" onClick={runDemo} type="button">{t("loadExample")}</button>}
               </div>
             </form>
           </div>
 
           <aside className="panel">
-            <p className="eyebrow">Estrutura operacional</p>
-            <h2>Departamentos da app</h2>
+            <p className="eyebrow">{t("operationalStructure")}</p>
+            <h2>{t("appDepartments")}</h2>
             <div className="channel-list">
-              {Object.values(CHANNELS).map((item) => (
-                <article className="channel" key={item.label}>
-                  <strong><span>{item.label}</span></strong>
-                  <span>{item.help}</span>
+              {Object.entries(CHANNELS).map(([department, item]) => (
+                <article className="channel" key={department}>
+                  <strong><span>{departmentLabel(department, activeLanguage)}</span></strong>
+                  <span>{t(item.helpKey)}</span>
                 </article>
               ))}
             </div>
@@ -1406,15 +1639,15 @@ export default function HomePage() {
           <div className="panel">
             <div className="panel-head">
               <div>
-                <p className="eyebrow">Ficheiros por departamento</p>
-                <h2>Circulares, SOPs e fichas</h2>
+                <p className="eyebrow">{t("filesByDepartment")}</p>
+                <h2>{t("documentSetTitle")}</h2>
               </div>
-              <span className="badge">{docsForDepartment.length} ficheiros</span>
+              <span className="badge">{docsForDepartment.length} {t("files")}</span>
             </div>
 
             <form className="operator-form" onSubmit={addDepartmentDoc}>
               <label>
-                Departamento
+                {t("department")}
                 <select id="department" value={docForm.department} onChange={handleDocChange}>
                   {availableDepartments.map((department) => (
                     <option key={department.id} value={department.id}>{departmentLabel(department.id, activeLanguage)}</option>
@@ -1422,7 +1655,7 @@ export default function HomePage() {
                 </select>
               </label>
               <label>
-                Tipo
+                {t("type")}
                 <select id="type" value={docForm.type} onChange={handleDocChange}>
                   {DOCUMENT_TYPE_OPTIONS.map((type) => (
                     <option key={type.id} value={type.id}>{documentTypeLabel(type.id, activeLanguage)}</option>
@@ -1430,11 +1663,11 @@ export default function HomePage() {
                 </select>
               </label>
               <label>
-                Titulo
-                <input id="title" value={docForm.title} onChange={handleDocChange} placeholder="Ex: SOP limpeza quarto" required />
+                {t("title")}
+                <input id="title" value={docForm.title} onChange={handleDocChange} placeholder={t("docTitlePlaceholder")} required />
               </label>
               <label>
-                Ficheiro
+                {t("file")}
                 <input
                   accept=".pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                   onChange={handleDocFileChange}
@@ -1443,8 +1676,8 @@ export default function HomePage() {
                 />
               </label>
               <label className="full">
-                Nota
-                <textarea id="note" rows={3} value={docForm.note} onChange={handleDocChange} placeholder="Quando usar, quem aplica, versao..." />
+                {t("note")}
+                <textarea id="note" rows={3} value={docForm.note} onChange={handleDocChange} placeholder={t("docNotePlaceholder")} />
               </label>
               {docForm.fileName && (
                 <div className="file-preview full">
@@ -1454,13 +1687,13 @@ export default function HomePage() {
                 </div>
               )}
               <div className="actions full">
-                <button type="submit">Adicionar ficheiro</button>
+                <button type="submit">{t("addFile")}</button>
               </div>
             </form>
 
             <div className="document-list">
               {docsForDepartment.length === 0 ? (
-                <div className="empty">Sem ficheiros neste departamento.</div>
+                <div className="empty">{t("noFiles")}</div>
               ) : (
                 docsForDepartment.map((document) => (
                   <article className="document-card" key={document.id}>
@@ -1472,9 +1705,9 @@ export default function HomePage() {
                       <span className="badge">{documentTypeLabel(document.type, activeLanguage)}</span>
                       <span className="badge">{departmentLabel(document.department, activeLanguage)}</span>
                       {document.fileData ? (
-                        <a className="button-link" href={document.fileData} rel="noreferrer" target="_blank">Abrir</a>
+                        <a className="button-link" href={document.fileData} rel="noreferrer" target="_blank">{t("openDocument")}</a>
                       ) : (
-                        <span className="badge urgent">Metadata</span>
+                        <span className="badge urgent">{t("metadataOnly")}</span>
                       )}
                     </div>
                     {document.note && <p>{document.note}</p>}
@@ -1486,13 +1719,9 @@ export default function HomePage() {
           </div>
 
           <aside className="panel">
-            <p className="eyebrow">Base documental</p>
-            <h2>Operacao sem WhatsApp perdido</h2>
-            <p className="notice">
-              Cada departamento deve ter os seus SOPs, circulares, fichas de posto
-              e checklists no mesmo sitio das tarefas. Menos procura de ficheiros,
-              mais execucao.
-            </p>
+            <p className="eyebrow">{t("documentBase")}</p>
+            <h2>{t("documentsTogetherTitle")}</h2>
+            <p className="notice">{t("documentsTogetherCopy")}</p>
           </aside>
         </section>
 
@@ -1500,15 +1729,15 @@ export default function HomePage() {
           <div className="panel">
             <div className="panel-head">
               <div>
-                <p className="eyebrow">Historico operacional</p>
-                <h2>Eventos recentes</h2>
+                <p className="eyebrow">{t("operationalHistory")}</p>
+                <h2>{t("recentEvents")}</h2>
               </div>
-              <span className="badge">{events.length} eventos</span>
+              <span className="badge">{events.length} {t("events")}</span>
             </div>
 
             <div className="event-list">
               {events.length === 0 ? (
-                <div className="empty">Sem eventos ainda. Cria um alerta ou testa a demo.</div>
+                <div className="empty">{t("noEvents")}</div>
               ) : (
                 events.map((event) => (
                   <EventItem
@@ -1526,17 +1755,16 @@ export default function HomePage() {
           </div>
 
           <aside className="panel">
-            <p className="eyebrow">Dominio proprio</p>
-            <h2>Preparado para marca TKC</h2>
+            <p className="eyebrow">{t("ownDomain")}</p>
+            <h2>{t("brandReady")}</h2>
             <ul className="setup-list">
               <li><strong>Frontend:</strong> app.tkccapital.pt</li>
               <li><strong>API:</strong> api.tkccapital.pt</li>
-              <li><strong>Dados:</strong> Supabase com RLS por departamento</li>
-              <li><strong>Convites:</strong> email e primeiro acesso protegido</li>
+              <li><strong>{t("data")}:</strong> {t("dataValue")}</li>
+              <li><strong>{t("invites")}:</strong> {t("invitesValue")}</li>
             </ul>
             <p className="notice">
-              A app e o sistema operacional oficial. Tarefas, mensagens,
-              documentos e quartos deixam de depender de ferramentas externas.
+              {t("officialSystemCopy")}
             </p>
           </aside>
         </section>
@@ -1546,26 +1774,26 @@ export default function HomePage() {
           <div className="panel">
             <div className="panel-head">
               <div>
-                <p className="eyebrow">Acessos</p>
-                <h2>Perfis de operadores</h2>
+                <p className="eyebrow">{t("accesses")}</p>
+                <h2>{t("operatorProfiles")}</h2>
               </div>
               <div className="event-meta">
-                <span className="badge">{operators.length} perfis</span>
-                <span className={`badge ${inviteClass(inviteState)}`}>{inviteState}</span>
+                <span className="badge">{operators.length} {t("profiles")}</span>
+                <span className={`badge ${inviteClass(inviteState)}`}>{t(inviteState)}</span>
               </div>
             </div>
 
             <form className="operator-form" onSubmit={createOperator}>
               <label>
-                Nome
-                <input id="name" value={operatorForm.name} onChange={handleOperatorChange} placeholder="Nome do operador" required />
+                {t("name")}
+                <input id="name" value={operatorForm.name} onChange={handleOperatorChange} placeholder={t("name")} required />
               </label>
               <label>
                 Email
                 <input id="email" type="email" value={operatorForm.email} onChange={handleOperatorChange} placeholder="operador@email.com" required />
               </label>
               <label>
-                Papel
+                {t("role")}
                 <select id="role" value={operatorForm.role} onChange={handleOperatorChange}>
                   {ROLE_OPTIONS.map((role) => (
                     <option key={role.id} value={role.id}>{roleLabel(role.id, activeLanguage)}</option>
@@ -1573,7 +1801,7 @@ export default function HomePage() {
                 </select>
               </label>
               <label>
-                Idioma
+                {t("language")}
                 <select id="language" value={operatorForm.language} onChange={handleOperatorChange}>
                   {LANGUAGE_OPTIONS.map((language) => (
                     <option key={language.id} value={language.id}>{language.label}</option>
@@ -1581,7 +1809,7 @@ export default function HomePage() {
                 </select>
               </label>
               <fieldset className="department-fieldset full">
-                <legend>Departamentos autorizados</legend>
+                <legend>{t("authorizedDepartments")}</legend>
                 <div className="check-grid">
                   {DEPARTMENT_OPTIONS.map((department) => (
                     <label className="check-row" key={department.id}>
@@ -1596,13 +1824,13 @@ export default function HomePage() {
                 </div>
               </fieldset>
               <div className="actions full">
-                <button type="submit">Criar perfil antes do login</button>
+                <button type="submit">{t("createProfileBeforeLogin")}</button>
               </div>
             </form>
 
             <div className="operator-list">
               {operators.length === 0 ? (
-                <div className="empty">Nenhum operador criado. A equipa nao escolhe departamento sozinha; a direcao define antes.</div>
+                <div className="empty">{t("noOperators")}</div>
               ) : (
                 operators.map((operator) => (
                   <article className="operator-card" key={operator.id}>
@@ -1611,8 +1839,8 @@ export default function HomePage() {
                     <div className="event-meta">
                       <span className="badge">{roleLabel(operator.role, activeLanguage)}</span>
                       <span className="badge">{operator.language.toUpperCase()}</span>
-                      <span className={`badge ${inviteClass(operator.inviteStatus)}`}>{inviteLabel(operator.inviteStatus)}</span>
-                      <span className={`badge ${operatorAccountClass(operator)}`}>{operatorAccountLabel(operator)}</span>
+                      <span className={`badge ${inviteClass(operator.inviteStatus)}`}>{inviteLabel(operator.inviteStatus, activeLanguage)}</span>
+                      <span className={`badge ${operatorAccountClass(operator)}`}>{operatorAccountLabel(operator, activeLanguage)}</span>
                     </div>
                     <div className="operator-departments">
                       {operator.departments.map((department) => (
@@ -1621,10 +1849,10 @@ export default function HomePage() {
                     </div>
                     <div className="task-actions">
                       {!isProduction && <button className="secondary" type="button" onClick={() => setActiveOperatorId(operator.id)}>{t("useProfile")}</button>}
-                      <button className="secondary" type="button" onClick={() => sendOperatorInvite(operator, "resend")}>Reenviar convite</button>
-                      <button className="secondary" type="button" onClick={() => setAccessOperatorId(operator.id)}>Info acesso</button>
+                      <button className="secondary" type="button" onClick={() => sendOperatorInvite(operator, "resend")}>{t("resendInvite")}</button>
+                      <button className="secondary" type="button" onClick={() => setAccessOperatorId(operator.id)}>{t("accessInfo")}</button>
                       {!isProduction && <button type="button" onClick={() => markAccountCreated(operator.id)}>
-                        {operatorAccountStatus(operator) === "active" ? "Conta confirmada" : "Conta criada"}
+                        {operatorAccountStatus(operator) === "active" ? t("accountConfirmed") : t("accountCreated")}
                       </button>}
                     </div>
                   </article>
@@ -1634,14 +1862,14 @@ export default function HomePage() {
           </div>
 
           <aside className="panel">
-            <p className="eyebrow">Primeiro login</p>
-            <h2>Fluxo correto</h2>
+            <p className="eyebrow">{t("firstLogin")}</p>
+            <h2>{t("correctFlow")}</h2>
             <ol className="setup-list">
-              <li>Direcao cria perfil e departamentos.</li>
-              <li>Operador recebe convite por email.</li>
-              <li>Operador cria palavra-passe.</li>
-              <li>Operador completa dados autorizados.</li>
-              <li>App abre so os departamentos permitidos.</li>
+              <li>{t("flowProfile")}</li>
+              <li>{t("flowInvite")}</li>
+              <li>{t("flowPassword")}</li>
+              <li>{t("flowDetails")}</li>
+              <li>{t("flowOpen")}</li>
             </ol>
           </aside>
         </section>
@@ -1651,11 +1879,11 @@ export default function HomePage() {
           <div className="panel">
             <div className="panel-head">
               <div>
-                <p className="eyebrow">Chat por departamento</p>
+                <p className="eyebrow">{t("departmentChat")}</p>
                 <h2>{departmentLabel(activeChatDepartment, activeLanguage)}</h2>
               </div>
               <label className="compact-label">
-                Departamento
+                {t("department")}
                 <select value={activeChatDepartment} onChange={(event) => setActiveChatDepartment(event.target.value)}>
                   {availableDepartments.map((department) => (
                     <option key={department.id} value={department.id}>{departmentLabel(department.id, activeLanguage)}</option>
@@ -1665,11 +1893,11 @@ export default function HomePage() {
             </div>
 
             <div className="access-strip">
-              <strong>Acesso aprovado pela direcao</strong>
-              <span>{authorizedChatOperators.length} operador(es) com acesso a este departamento</span>
+              <strong>{t("accessApproved")}</strong>
+              <span>{authorizedChatOperators.length} {t("operatorsWithAccess")}</span>
               <div className="operator-departments">
                 {authorizedChatOperators.length === 0 ? (
-                  <span className="badge blocked">Sem operador autorizado</span>
+                  <span className="badge blocked">{t("noAuthorizedOperator")}</span>
                 ) : (
                   authorizedChatOperators.map((operator) => (
                     <span className={`badge ${operatorAccountClass(operator)}`} key={operator.id}>{operator.name}</span>
@@ -1683,19 +1911,19 @@ export default function HomePage() {
                 rows={3}
                 value={chatDraft}
                 onChange={(event) => setChatDraft(event.target.value)}
-                placeholder="Mensagem para o departamento selecionado..."
+                placeholder={t("departmentMessagePlaceholder")}
               />
-              <button type="submit">Enviar ao departamento</button>
+              <button type="submit">{t("sendToDepartment")}</button>
             </form>
 
             <div className="chat-list">
               {activeChatMessages.length === 0 ? (
-                <div className="empty">Sem mensagens neste departamento.</div>
+                <div className="empty">{t("noDepartmentMessages")}</div>
               ) : (
                 activeChatMessages.map((item) => (
                   <article className="chat-message" key={item.id}>
                     <p>{item.text}</p>
-                    <small>{item.author} - {new Date(item.createdAt).toLocaleString("pt-PT")}</small>
+                    <small>{item.author} - {formatDateTime(item.createdAt, activeLanguage)}</small>
                   </article>
                 ))
               )}
@@ -1703,12 +1931,9 @@ export default function HomePage() {
           </div>
 
           <aside className="panel">
-            <p className="eyebrow">Autorizacao</p>
-            <h2>Sem canal aberto</h2>
-            <p className="notice">
-              O operador so ve o chat dos departamentos atribuidos pela direcao.
-              Em producao, esta regra fica protegida por RLS no Supabase e tambem refletida no ecran.
-            </p>
+            <p className="eyebrow">{t("authorization")}</p>
+            <h2>{t("noOpenChannel")}</h2>
+            <p className="notice">{t("authorizationCopy")}</p>
           </aside>
         </section>
 
@@ -1716,10 +1941,10 @@ export default function HomePage() {
           <div className="panel">
             <div className="panel-head">
               <div>
-                <p className="eyebrow">Chat geral</p>
-                <h2>Ideias e decisoes</h2>
+                <p className="eyebrow">{t("generalChat")}</p>
+                <h2>{t("ideasDecisions")}</h2>
               </div>
-              <span className="badge">{ideas.length} mensagens</span>
+              <span className="badge">{ideas.length} {t("messages")}</span>
             </div>
 
             <form className="chat-form" onSubmit={addIdea}>
@@ -1727,19 +1952,19 @@ export default function HomePage() {
                 rows={3}
                 value={ideaText}
                 onChange={(event) => setIdeaText(event.target.value)}
-                placeholder="Trocar ideia, registar decisao, nota de direcao..."
+                placeholder={t("ideaPlaceholder")}
               />
-              <button type="submit">Adicionar</button>
+              <button type="submit">{t("add")}</button>
             </form>
 
             <div className="chat-list">
               {ideas.length === 0 ? (
-                <div className="empty">Sem mensagens. Usa este espaco para ideias, decisoes e notas gerais.</div>
+                <div className="empty">{t("noGeneralMessages")}</div>
               ) : (
                 ideas.map((item) => (
                   <article className="chat-message" key={item.id}>
                     <p>{item.text}</p>
-                    <small>{new Date(item.createdAt).toLocaleString("pt-PT")}</small>
+                    <small>{formatDateTime(item.createdAt, activeLanguage)}</small>
                   </article>
                 ))
               )}
@@ -1747,48 +1972,41 @@ export default function HomePage() {
           </div>
 
           <aside className="panel">
-            <p className="eyebrow">Chat interno</p>
-            <h2>App autonoma</h2>
-            <p className="notice">
-              Tarefas, comentarios, ideias e conversas por departamento ficam
-              na app TKC, com o acesso definido pela direcao.
-            </p>
+            <p className="eyebrow">{t("internalChat")}</p>
+            <h2>{t("autonomousApp")}</h2>
+            <p className="notice">{t("internalChatCopy")}</p>
           </aside>
         </section>
 
         {activeAccessOperator && (
           <div className="modal-backdrop" role="presentation" onClick={() => setAccessOperatorId(null)}>
-            <section className="modal" role="dialog" aria-modal="true" aria-label="Informacao de acesso" onClick={(event) => event.stopPropagation()}>
+            <section className="modal" role="dialog" aria-modal="true" aria-label={t("accessInformation")} onClick={(event) => event.stopPropagation()}>
               <div className="panel-head">
                 <div>
-                  <p className="eyebrow">Acesso operador</p>
+                  <p className="eyebrow">{t("operatorAccess")}</p>
                   <h2>{activeAccessOperator.name}</h2>
                 </div>
-                <button className="secondary" type="button" onClick={() => setAccessOperatorId(null)}>Fechar</button>
+                <button className="secondary" type="button" onClick={() => setAccessOperatorId(null)}>{t("close")}</button>
               </div>
               <div className="access-detail">
                 <p><strong>Email:</strong> {activeAccessOperator.email}</p>
-                <p><strong>Conta:</strong> {operatorAccountLabel(activeAccessOperator)}</p>
-                <p><strong>Convites:</strong> {activeAccessOperator.inviteCount || 0}</p>
-                <p><strong>Ultimo convite:</strong> {activeAccessOperator.lastInviteAt ? new Date(activeAccessOperator.lastInviteAt).toLocaleString("pt-PT") : "Ainda nao enviado"}</p>
-                <p><strong>Conta criada em:</strong> {activeAccessOperator.accountCreatedAt ? new Date(activeAccessOperator.accountCreatedAt).toLocaleString("pt-PT") : "Pendente"}</p>
+                <p><strong>{t("account")}:</strong> {operatorAccountLabel(activeAccessOperator, activeLanguage)}</p>
+                <p><strong>{t("invitations")}:</strong> {activeAccessOperator.inviteCount || 0}</p>
+                <p><strong>{t("lastInvite")}:</strong> {activeAccessOperator.lastInviteAt ? formatDateTime(activeAccessOperator.lastInviteAt, activeLanguage) : t("notSentYet")}</p>
+                <p><strong>{t("accountCreatedOn")}:</strong> {activeAccessOperator.accountCreatedAt ? formatDateTime(activeAccessOperator.accountCreatedAt, activeLanguage) : t("pendingStatus")}</p>
                 <div>
-                  <strong>Departamentos autorizados</strong>
+                  <strong>{t("authorizedDepartments")}</strong>
                   <div className="operator-departments">
                     {(activeAccessOperator.departments || []).map((department) => (
                       <span className="badge" key={department}>{departmentLabel(department, activeLanguage)}</span>
                     ))}
                   </div>
                 </div>
-                <p className="notice">
-                  Se a conta ja estiver criada, reenviar convite deve servir para
-                  reposicao de acesso ou primeiro login pendente, nao para criar
-                  uma segunda conta.
-                </p>
+                <p className="notice">{t("accessModalCopy")}</p>
               </div>
               <div className="actions">
-                <button className="secondary" type="button" onClick={() => sendOperatorInvite(activeAccessOperator, "resend")}>Reenviar convite</button>
-                {!isProduction && <button type="button" onClick={() => markAccountCreated(activeAccessOperator.id)}>Marcar conta criada</button>}
+                <button className="secondary" type="button" onClick={() => sendOperatorInvite(activeAccessOperator, "resend")}>{t("resendInvite")}</button>
+                {!isProduction && <button type="button" onClick={() => markAccountCreated(activeAccessOperator.id)}>{t("markAccountCreated")}</button>}
               </div>
             </section>
           </div>
@@ -1798,7 +2016,18 @@ export default function HomePage() {
   );
 }
 
-function HousekeepingBoard({ language, plan, stats, onCreateTasks, onReset, onStatusChange, t }) {
+function HousekeepingBoard({
+  language,
+  plan,
+  stats,
+  isDirection,
+  operators,
+  onAssignmentsChange,
+  onCreateTasks,
+  onReset,
+  onStatusChange,
+  t,
+}) {
   return (
     <section className="workspace-grid bottom">
       <div className="panel">
@@ -1818,13 +2047,16 @@ function HousekeepingBoard({ language, plan, stats, onCreateTasks, onReset, onSt
         <div className="access-strip">
           <strong>{t("importedStructure")}</strong>
           <span>{t("legacyNotice")}</span>
+          <span>{t("assignmentDate")}: {formatDate(plan.assignmentDate, language)}</span>
           <span>{t("plannedTime")}: {stats.minutes} min / {Math.ceil(stats.minutes / 60)} h</span>
         </div>
 
-        <div className="actions housekeeping-actions">
-          <button type="button" onClick={onCreateTasks}>{t("generateTasks")}</button>
-          <button className="secondary" type="button" onClick={onReset}>{t("resetRooms")}</button>
-        </div>
+        {isDirection && (
+          <div className="actions housekeeping-actions">
+            <button type="button" onClick={onCreateTasks}>{t("generateTasks")}</button>
+            <button className="secondary" type="button" onClick={onReset}>{t("resetRooms")}</button>
+          </div>
+        )}
 
         <div className="binome-grid">
           {plan.binomes.map((binome) => (
@@ -1834,8 +2066,40 @@ function HousekeepingBoard({ language, plan, stats, onCreateTasks, onReset, onSt
                   <strong>{binome.label}</strong>
                   <span>{binome.zone}</span>
                 </div>
-                <span className="badge">{binome.members.join(" + ")}</span>
+                <span className="badge">
+                  {binome.members.length > 0 ? binome.members.join(" + ") : t("noAssignedOperator")}
+                </span>
               </div>
+
+              {isDirection && (
+                <fieldset className="binome-assignment">
+                  <legend>{t("assignedToday")}</legend>
+                  {operators.length === 0 ? (
+                    <p className="notice">{t("noActiveRoomOperators")}</p>
+                  ) : (
+                    <div className="check-grid">
+                      {operators.map((operator) => {
+                        const checked = (binome.operatorIds || []).includes(operator.id);
+                        return (
+                          <label className="check-row" key={operator.id}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => onAssignmentsChange(
+                                binome.id,
+                                checked
+                                  ? (binome.operatorIds || []).filter((id) => id !== operator.id)
+                                  : [...(binome.operatorIds || []), operator.id]
+                              )}
+                            />
+                            <span>{operator.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </fieldset>
+              )}
 
               <div className="room-grid">
                 {binome.rooms.map((room) => (
@@ -1865,11 +2129,11 @@ function HousekeepingBoard({ language, plan, stats, onCreateTasks, onReset, onSt
         <ul className="setup-list">
           <li><strong>{t("officialApp")}:</strong> TKC Capital Ops</li>
           <li><strong>{t("module")}:</strong> Housekeeping / Rooms</li>
-          <li><strong>{t("oldSite")}:</strong> TKC Rooms legado</li>
+          <li><strong>{t("oldSite")}:</strong> {t("oldSiteValue")}</li>
           <li><strong>{t("nextStep")}:</strong> {t("redirectOldLink")}</li>
         </ul>
         <p className="notice">
-          {t("noTwoSystems")}
+          {t("dailyAccessNotice")}
         </p>
         <a className="button-link muted-link" href={plan.legacyUrl} rel="noreferrer" target="_blank">{t("viewLegacy")}</a>
       </aside>
@@ -1877,7 +2141,7 @@ function HousekeepingBoard({ language, plan, stats, onCreateTasks, onReset, onSt
   );
 }
 
-function AccessState({ title, message }) {
+function AccessState({ title, message, returnLabel }) {
   return (
     <div className="hotel-ops">
       <main className="shell access-state">
@@ -1885,7 +2149,7 @@ function AccessState({ title, message }) {
           <p className="eyebrow">TKC Capital Ops</p>
           <h1>{title}</h1>
           <p className="notice">{message}</p>
-          <Link className="button-link" href="/login?next=%2Fhotel">Voltar ao login</Link>
+          <Link className="button-link" href="/login?next=%2Fhotel">{returnLabel}</Link>
         </section>
       </main>
     </div>
@@ -1920,17 +2184,17 @@ function EventItem({ event, language, onAddComment, onAddPhoto, onStatusChange, 
       <strong>
         <span>{eventLabel(event.eventType, language)}{room}</span>
         <span className="event-badges">
-          <span className={`badge ${badgeClass}`}>{event.priority}</span>
+          <span className={`badge ${badgeClass}`}>{t(event.priority === "blocked" ? "blocking" : event.priority)}</span>
           <span className={`badge ${statusClass(status)}`}>{statusLabel(status, language)}</span>
         </span>
       </strong>
       <p>{event.note}</p>
       <div className="event-meta">
         <span className="badge">{channel}</span>
-        <small>{new Date(event.createdAt).toLocaleString("pt-PT")}</small>
+        <small>{formatDateTime(event.createdAt, language)}</small>
       </div>
 
-      <div className="task-actions" aria-label="Estado da tarefa">
+      <div className="task-actions" aria-label={t("taskState")}>
         <button className="secondary" type="button" onClick={() => onStatusChange(event.id, "open")}>{statusLabel("open", language)}</button>
         <button className="secondary" type="button" onClick={() => onStatusChange(event.id, "in_progress")}>{statusLabel("in_progress", language)}</button>
         <button className="secondary" type="button" onClick={() => onStatusChange(event.id, "blocked")}>{statusLabel("blocked", language)}</button>
@@ -1938,7 +2202,7 @@ function EventItem({ event, language, onAddComment, onAddPhoto, onStatusChange, 
       </div>
 
       <div className="photo-actions">
-        <select value={photoReason} onChange={(changeEvent) => setPhotoReason(changeEvent.target.value)} aria-label="Tipo de foto">
+        <select value={photoReason} onChange={(changeEvent) => setPhotoReason(changeEvent.target.value)} aria-label={t("photoType")}>
           {PHOTO_REASON_OPTIONS.map((reason) => (
             <option key={reason.id} value={reason.id}>{photoReasonLabel(reason.id, language)}</option>
           ))}
@@ -1956,7 +2220,7 @@ function EventItem({ event, language, onAddComment, onAddPhoto, onStatusChange, 
               <img alt={photoReasonLabel(attachment.reason, language)} src={attachment.url} />
               <figcaption>
                 <span>{photoReasonLabel(attachment.reason, language)}</span>
-                <small>{new Date(attachment.createdAt).toLocaleString("pt-PT")}</small>
+                <small>{formatDateTime(attachment.createdAt, language)}</small>
               </figcaption>
             </figure>
           ))}
@@ -1968,7 +2232,7 @@ function EventItem({ event, language, onAddComment, onAddPhoto, onStatusChange, 
           {comments.map((item) => (
             <div className="comment" key={item.id}>
               <p>{item.text}</p>
-              <small>{new Date(item.createdAt).toLocaleString("pt-PT")}</small>
+              <small>{formatDateTime(item.createdAt, language)}</small>
             </div>
           ))}
         </div>
@@ -1976,8 +2240,8 @@ function EventItem({ event, language, onAddComment, onAddPhoto, onStatusChange, 
 
       <form className="comment-form" onSubmit={submitComment}>
         <input
-          aria-label="Adicionar comentario"
-          placeholder="Adicionar comentario..."
+          aria-label={t("addComment")}
+          placeholder={`${t("addComment")}...`}
           value={comment}
           onChange={(changeEvent) => setComment(changeEvent.target.value)}
         />
@@ -1988,7 +2252,13 @@ function EventItem({ event, language, onAddComment, onAddPhoto, onStatusChange, 
 }
 
 function translate(language, key) {
-  return UI_TEXT[language]?.[key] || UI_TEXT.fr[key] || UI_TEXT.pt[key] || key;
+  return UI_TEXT[language]?.[key]
+    || UI_TEXT_EXTRA[key]?.[language]
+    || UI_TEXT.fr[key]
+    || UI_TEXT_EXTRA[key]?.fr
+    || UI_TEXT.pt[key]
+    || UI_TEXT_EXTRA[key]?.pt
+    || key;
 }
 
 function translatedLabel(map, id, language, fallback) {
@@ -2066,32 +2336,60 @@ function formatFileSize(size) {
   return `${(size / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function localeForLanguage(language) {
+  return {
+    fr: "fr-FR",
+    pt: "pt-PT",
+    en: "en-GB",
+    es: "es-ES",
+    it: "it-IT",
+    pl: "pl-PL",
+  }[language] || "fr-FR";
+}
+
+function formatDate(value, language) {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat(localeForLanguage(language), {
+    dateStyle: "medium",
+    timeZone: "Europe/Paris",
+  }).format(new Date(`${value}T12:00:00Z`));
+}
+
+function formatDateTime(value, language) {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat(localeForLanguage(language), {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "Europe/Paris",
+  }).format(new Date(value));
+}
+
 function operatorAccountStatus(operator) {
   if (operator.accountStatus) return operator.accountStatus;
   return operator.accountCreatedAt || operator.firstLoginRequired === false ? "active" : "pending";
 }
 
-function operatorAccountLabel(operator) {
-  return operatorAccountStatus(operator) === "active" ? "Conta criada" : "Acesso pendente";
+function operatorAccountLabel(operator, language = "fr") {
+  return translate(language, operatorAccountStatus(operator) === "active" ? "accountCreated" : "accountPending");
 }
 
 function operatorAccountClass(operator) {
   return operatorAccountStatus(operator) === "active" ? "done" : "urgent";
 }
 
-function inviteLabel(status) {
-  const labels = {
-    sending: "A enviar convite",
-    sent: "Convite enviado",
-    dry_run: "Convite preparado",
-    error: "Erro no convite"
+function inviteLabel(status, language = "fr") {
+  const keys = {
+    sending: "sendingInvite",
+    sent: "inviteSent",
+    dry_run: "invitePrepared",
+    error: "inviteError",
   };
-  return labels[status] || "Primeiro login pendente";
+  return translate(language, keys[status] || "invitePending");
 }
 
 function inviteClass(status) {
-  if (status === "sent" || status === "Convite enviado") return "done";
-  if (status === "error" || status === "Erro no convite") return "blocked";
-  if (status === "sending" || status === "A enviar convite" || status === "dry_run" || status === "Convite preparado") return "urgent";
+  if (status === "sent" || status === "inviteSent") return "done";
+  if (status === "error" || status === "inviteError") return "blocked";
+  if (["sending", "sendingInvite", "resendingInvite", "dry_run", "invitePrepared"].includes(status)) return "urgent";
   return "";
 }

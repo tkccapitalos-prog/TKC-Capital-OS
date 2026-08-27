@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import HotelOperationsClient from "./HotelOperationsClient";
 
 export const metadata: Metadata = {
-  title: "Operacoes hoteleiras",
-  description: "Quartos, tarefas, equipas, documentos e chat por departamento.",
+  title: "Opérations hôtelières",
+  description: "Chambres, tâches, équipes, documents et chat par service.",
 };
 
 export default function HotelPage() {

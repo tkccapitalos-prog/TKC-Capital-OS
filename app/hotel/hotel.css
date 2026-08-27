@@ -649,6 +649,24 @@
   color: var(--muted);
 }
 
+.hotel-ops .binome-assignment {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8f2e8;
+}
+
+.hotel-ops .binome-assignment legend {
+  padding: 0 6px;
+  color: var(--slate);
+  font-weight: 900;
+}
+
+.hotel-ops .binome-assignment .notice {
+  margin: 0;
+}
+
 .hotel-ops .room-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));

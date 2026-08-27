@@ -27,7 +27,7 @@ export default function LoginPage() {
 
     if (!supabase) {
       setStatus("error");
-      setMessage("Supabase ainda nao esta configurado neste ambiente.");
+      setMessage("Supabase n'est pas encore configuré dans cet environnement.");
       return;
     }
 
@@ -37,7 +37,7 @@ export default function LoginPage() {
 
     if (error) {
       setStatus("error");
-      setMessage("Email ou palavra-passe incorretos.");
+      setMessage("E-mail ou mot de passe incorrect.");
       return;
     }
 
@@ -50,7 +50,7 @@ export default function LoginPage() {
 
     if (!supabase) {
       setStatus("error");
-      setMessage("Supabase ainda nao esta configurado neste ambiente.");
+      setMessage("Supabase n'est pas encore configuré dans cet environnement.");
       return;
     }
 
@@ -65,7 +65,7 @@ export default function LoginPage() {
 
     if (error) {
       setStatus("error");
-      setMessage("Nao foi possivel iniciar a entrada com Google.");
+      setMessage("Impossible de lancer la connexion avec Google.");
     }
   }
 
@@ -78,7 +78,7 @@ export default function LoginPage() {
           </div>
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#c79858]">TKC Capital</p>
-            <h1 className="mt-1 text-2xl font-bold">Entrar no Capital OS</h1>
+            <h1 className="mt-1 text-2xl font-bold">Connexion à Capital OS</h1>
           </div>
         </div>
 
@@ -95,7 +95,7 @@ export default function LoginPage() {
             />
           </label>
           <label className="grid gap-2 text-sm font-semibold text-slate-200">
-            Palavra-passe
+            Mot de passe
             <input
               className="h-11 rounded-lg border border-white/20 bg-black/20 px-3 text-white outline-none focus:border-[#c79858]"
               type="password"
@@ -110,7 +110,7 @@ export default function LoginPage() {
             disabled={status === "loading"}
             type="submit"
           >
-            {status === "loading" ? "A entrar..." : "Entrar"}
+            {status === "loading" ? "Connexion..." : "Se connecter"}
           </button>
         </form>
 
@@ -126,13 +126,13 @@ export default function LoginPage() {
           onClick={loginWithGoogle}
           type="button"
         >
-          Entrar com Google
+          Continuer avec Google
         </button>
 
         {message && <p className="mt-4 rounded-lg border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-200">{message}</p>}
 
         <Link href="/" className="mt-6 block text-center text-sm text-slate-400 hover:text-white">
-          Voltar ao inicio
+          Retour à l&apos;accueil
         </Link>
       </section>
     </main>

@@ -11,7 +11,7 @@ export async function POST(request) {
 
   if (!authorization.startsWith("Bearer ")) {
     return NextResponse.json(
-      { ok: false, error: "Abra o convite recebido por email antes de continuar." },
+      { ok: false, error: "authentication_required" },
       { status: 401 },
     );
   }
