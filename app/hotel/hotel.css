@@ -10,6 +10,7 @@
   --brand-blue: #123c69;
   --brand-ink: #0b1524;
   --brand-teal: #2b7a78;
+  --ibis-red: #d71920;
   --green: #17623d;
   --amber: #9a5d08;
   --slate: #233044;
@@ -206,6 +207,64 @@
   margin: 24px auto 48px;
 }
 
+.hotel-ops .property-brand-strip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 18px;
+  padding: 18px 22px;
+  border: 1px solid rgba(215, 25, 32, 0.24);
+  border-left: 6px solid var(--ibis-red);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.hotel-ops .ibis-logo-frame {
+  display: grid;
+  width: 138px;
+  min-height: 76px;
+  place-items: center;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.hotel-ops .ibis-logo-frame img {
+  display: block;
+  width: 124px;
+  height: 68px;
+  object-fit: contain;
+}
+
+.hotel-ops .property-brand-copy h2,
+.hotel-ops .property-brand-copy p {
+  margin: 0;
+}
+
+.hotel-ops .property-brand-copy h2 {
+  color: var(--brand-ink);
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.05;
+}
+
+.hotel-ops .property-brand-copy p:not(.eyebrow) {
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.hotel-ops .property-internal-badge {
+  max-width: 220px;
+  border-radius: 999px;
+  padding: 9px 13px;
+  background: rgba(215, 25, 32, 0.09);
+  color: #9f1117;
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+}
+
 .hotel-ops .access-state {
   min-height: 100vh;
   display: grid;
@@ -305,6 +364,19 @@
 
 .hotel-ops .workspace-grid.bottom {
   grid-template-columns: minmax(0, 1fr) minmax(290px, 0.45fr);
+}
+
+.hotel-ops .department-task-grid {
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.55fr);
+}
+
+.hotel-ops .department-task-creator .operator-form {
+  grid-template-columns: 1fr;
+  margin-top: 18px;
+}
+
+.hotel-ops .department-task-creator textarea {
+  min-height: 150px;
 }
 
 .hotel-ops .panel {
@@ -939,6 +1011,7 @@
 
 @media (max-width: 860px) {
   .hotel-ops .topbar,
+  .hotel-ops .property-brand-strip,
   .hotel-ops .hero-band,
   .hotel-ops .workspace-grid,
   .hotel-ops .workspace-grid.bottom {
@@ -948,6 +1021,14 @@
   .hotel-ops .topbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .hotel-ops .property-brand-strip {
+    justify-items: start;
+  }
+
+  .hotel-ops .property-internal-badge {
+    max-width: none;
   }
 
   .hotel-ops .status-grid,

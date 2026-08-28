@@ -56,6 +56,7 @@ const CHANNELS = {
 };
 
 const EVENT_LABELS = {
+  department_task: "Tarefa de departamento",
   room_cleaning: "Quarto a fazer",
   room_ready: "Quarto pronto",
   room_blocked: "Quarto bloqueado",
@@ -74,6 +75,7 @@ const HOUSEKEEPING_STORAGE_KEY = "tkc-hotel-ops-housekeeping-plan";
 const LANGUAGE_STORAGE_KEY = "tkc-hotel-ops-language";
 const ACTIVE_OPERATOR_STORAGE_KEY = "tkc-hotel-ops-active-operator";
 const TKC_ROOMS_LEGACY_URL = "https://tkc-rooms-nogent.edreammotors.chatgpt.site";
+const IBIS_LOGO_URL = "https://images.group.accor.com/yrj0orc8tx24/7dFUOI9ugM7daxneFKLsiT/013e03109cadf22a89435390b151f4eb/LogoMarque-Groupe_ibis.svg";
 
 const LANGUAGE_OPTIONS = [
   { id: "fr", label: "Français" },
@@ -330,6 +332,24 @@ const UI_TEXT = {
 const localized = (pt, fr, en, es, it, pl) => ({ pt, fr, en, es, it, pl });
 
 const UI_TEXT_EXTRA = {
+  propertyHotel: localized("Hotel abrangido", "Hôtel concerné", "Hotel", "Hotel", "Hotel", "Hotel"),
+  propertyInternal: localized("Ferramenta operacional interna", "Outil opérationnel interne", "Internal operations tool", "Herramienta operativa interna", "Strumento operativo interno", "Wewnętrzne narzędzie operacyjne"),
+  propertyReminder: localized("Esta pagina operacional destina-se exclusivamente ao hotel ibis Nogent-sur-Marne.", "Cette page opérationnelle concerne exclusivement l'hôtel ibis Nogent-sur-Marne.", "This operations page is exclusively for ibis Nogent-sur-Marne hotel.", "Esta página operativa corresponde exclusivamente al hotel ibis Nogent-sur-Marne.", "Questa pagina operativa è riservata esclusivamente all'hotel ibis Nogent-sur-Marne.", "Ta strona operacyjna jest przeznaczona wyłącznie dla hotelu ibis Nogent-sur-Marne."),
+  departmentTasksEyebrow: localized("Tarefas por departamento", "Tâches par département", "Tasks by department", "Tareas por departamento", "Attività per reparto", "Zadania według działu"),
+  departmentTasksTitle: localized("Plano de tarefas da equipa", "Plan de tâches des équipes", "Team task plan", "Plan de tareas del equipo", "Piano attività dei team", "Plan zadań zespołów"),
+  departmentTaskFilter: localized("Filtrar por departamento", "Filtrer par département", "Filter by department", "Filtrar por departamento", "Filtra per reparto", "Filtruj według działu"),
+  allDepartments: localized("Todos os departamentos", "Tous les départements", "All departments", "Todos los departamentos", "Tutti i reparti", "Wszystkie działy"),
+  newDepartmentTask: localized("Nova tarefa", "Nouvelle tâche", "New task", "Nueva tarea", "Nuova attività", "Nowe zadanie"),
+  taskTitle: localized("Titulo da tarefa", "Titre de la tâche", "Task title", "Título de la tarea", "Titolo dell'attività", "Tytuł zadania"),
+  taskTitlePlaceholder: localized("Ex.: Verificar fecho de caixa", "Ex. : Vérifier la clôture de caisse", "E.g. Check cash closing", "Ej.: Verificar cierre de caja", "Es.: Verificare la chiusura cassa", "Np. Sprawdzić zamknięcie kasy"),
+  taskDescription: localized("Descricao", "Description", "Description", "Descripción", "Descrizione", "Opis"),
+  taskDescriptionPlaceholder: localized("Indique o que deve ser feito e o resultado esperado.", "Indiquez ce qui doit être fait et le résultat attendu.", "Describe what must be done and the expected result.", "Indique qué debe hacerse y el resultado esperado.", "Indicare cosa deve essere fatto e il risultato atteso.", "Opisz, co należy zrobić i jaki ma być oczekiwany rezultat."),
+  createDepartmentTask: localized("Criar tarefa", "Créer la tâche", "Create task", "Crear tarea", "Crea attività", "Utwórz zadanie"),
+  noDepartmentTasks: localized("Nenhuma tarefa de departamento em curso.", "Aucune tâche départementale en cours.", "No department tasks in progress.", "No hay tareas de departamento en curso.", "Nessuna attività di reparto in corso.", "Brak zadań działowych w toku."),
+  directionOnlyTaskCreation: localized("Apenas a direcao pode criar tarefas de departamento. Pode atualizar o estado das tarefas dos seus departamentos.", "Seule la direction peut créer des tâches départementales. Vous pouvez mettre à jour l'état des tâches de vos services.", "Only management can create department tasks. You can update tasks for your departments.", "Solo la dirección puede crear tareas de departamento. Puede actualizar las tareas de sus departamentos.", "Solo la direzione può creare attività di reparto. Puoi aggiornare quelle dei tuoi reparti.", "Tylko dyrekcja może tworzyć zadania działowe. Możesz aktualizować zadania swoich działów."),
+  savingDepartmentTask: localized("A guardar tarefa", "Enregistrement de la tâche", "Saving task", "Guardando tarea", "Salvataggio attività", "Zapisywanie zadania"),
+  departmentTaskSaved: localized("Tarefa criada", "Tâche créée", "Task created", "Tarea creada", "Attività creata", "Zadanie utworzone"),
+  departmentTaskError: localized("Erro ao criar tarefa", "Erreur lors de la création de la tâche", "Error creating task", "Error al crear la tarea", "Errore durante la creazione dell'attività", "Błąd podczas tworzenia zadania"),
   previewLocal: localized("Pre-visualizacao local", "Apercu local", "Local preview", "Vista previa local", "Anteprima locale", "Podglad lokalny"),
   targetDomain: localized("Dominio alvo", "Domaine cible", "Target domain", "Dominio objetivo", "Dominio di destinazione", "Domena docelowa"),
   domain: localized("Dominio", "Domaine", "Domain", "Dominio", "Dominio", "Domena"),
@@ -513,6 +533,13 @@ const initialForm = {
   note: ""
 };
 
+const initialDepartmentTaskForm = {
+  department: "reception",
+  title: "",
+  description: "",
+  priority: "normal"
+};
+
 const initialOperatorForm = {
   name: "",
   email: "",
@@ -577,6 +604,7 @@ const ROLE_LABELS = {
 };
 
 const EVENT_LABEL_TRANSLATIONS = {
+  department_task: { pt: "Tarefa de departamento", fr: "Tâche départementale", en: "Department task", es: "Tarea de departamento", it: "Attività di reparto", pl: "Zadanie działowe" },
   room_cleaning: { pt: "Quarto a fazer", fr: "Chambre a faire", en: "Room to clean", es: "Habitacion por hacer", it: "Camera da fare", pl: "Pokoj do zrobienia" },
   room_ready: { pt: "Quarto pronto", fr: "Chambre prete", en: "Room ready", es: "Habitacion lista", it: "Camera pronta", pl: "Pokoj gotowy" },
   room_blocked: { pt: "Quarto bloqueado", fr: "Chambre bloquee", en: "Room blocked", es: "Habitacion bloqueada", it: "Camera bloccata", pl: "Pokoj zablokowany" },
@@ -698,6 +726,8 @@ export default function HomePage() {
   const [operators, setOperators] = useState([]);
   const [housekeepingPlan, setHousekeepingPlan] = useState(buildHousekeepingPlan);
   const [form, setForm] = useState(initialForm);
+  const [departmentTaskForm, setDepartmentTaskForm] = useState(initialDepartmentTaskForm);
+  const [departmentTaskFilter, setDepartmentTaskFilter] = useState("all");
   const [operatorForm, setOperatorForm] = useState(initialOperatorForm);
   const [departmentChats, setDepartmentChats] = useState({});
   const [departmentDocs, setDepartmentDocs] = useState({});
@@ -909,7 +939,7 @@ export default function HomePage() {
     : availableDepartments;
   const taskEventTypes = isRoomOperator
     ? ["room_cleaning", "room_ready", "room_blocked", "maintenance_created"]
-    : Object.keys(EVENT_LABEL_TRANSLATIONS);
+    : Object.keys(EVENT_LABEL_TRANSLATIONS).filter((eventType) => eventType !== "department_task");
   const canUseHousekeeping = isDirection || availableDepartments.some((department) => department.id === "housekeeping");
   const docsForDepartment = departmentDocs[docForm.department] || [];
   const housekeepingStats = getHousekeepingStats(housekeepingPlan);
@@ -921,6 +951,11 @@ export default function HomePage() {
     ["operator", "supervisor"].includes(operator.role) &&
     (operator.departments || []).includes("housekeeping")
   );
+  const departmentTasks = events.filter((event) => event.eventType === "department_task");
+  const operationalEvents = events.filter((event) => event.eventType !== "department_task");
+  const filteredDepartmentTasks = departmentTaskFilter === "all"
+    ? departmentTasks
+    : departmentTasks.filter((event) => event.department === departmentTaskFilter);
 
   if (authMode === "checking") {
     return <AccessState title={t("checkingSession")} message={t("connectingSupabase")} returnLabel={t("returnLogin")} />;
@@ -971,6 +1006,53 @@ export default function HomePage() {
     addEvent(payload);
     setForm({ ...initialForm, department: payload.department });
     setSyncState("savedApp");
+  }
+
+  function handleDepartmentTaskChange(event) {
+    const { name, value } = event.target;
+    setDepartmentTaskForm((current) => ({ ...current, [name]: value }));
+  }
+
+  async function submitDepartmentTask(event) {
+    event.preventDefault();
+    if (!isDirection) return;
+
+    const title = departmentTaskForm.title.trim();
+    const description = departmentTaskForm.description.trim();
+    if (!title || !description) return;
+
+    const payload = {
+      id: crypto.randomUUID(),
+      department: departmentTaskForm.department,
+      eventType: "department_task",
+      room: "",
+      priority: departmentTaskForm.priority,
+      status: "open",
+      title,
+      note: description,
+      metadata: { title, kind: "department_task" },
+      comments: [],
+      createdAt: new Date().toISOString()
+    };
+
+    if (isProduction && supabaseRef.current && currentProfile?.id) {
+      setSyncState("savingDepartmentTask");
+      try {
+        await createTask(supabaseRef.current, payload, currentProfile.id);
+        await refreshWorkspace();
+        setDepartmentTaskForm((current) => ({ ...initialDepartmentTaskForm, department: current.department }));
+        setSyncState("departmentTaskSaved");
+        setWorkspaceError("");
+      } catch (error) {
+        setSyncState("departmentTaskError");
+        setWorkspaceError(error instanceof Error ? error.message : "departmentTaskError");
+      }
+      return;
+    }
+
+    addEvent(payload);
+    setDepartmentTaskForm((current) => ({ ...initialDepartmentTaskForm, department: current.department }));
+    setSyncState("departmentTaskSaved");
   }
 
   function addEvent(payload) {
@@ -1506,6 +1588,20 @@ export default function HomePage() {
       </header>
 
       <main className="shell">
+        <section className="property-brand-strip" aria-label={t("propertyHotel")}>
+          <div className="ibis-logo-frame">
+            {/* Official ibis wordmark is served from Accor's brand asset host. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img alt="ibis" height="96" src={IBIS_LOGO_URL} width="180" />
+          </div>
+          <div className="property-brand-copy">
+            <p className="eyebrow">{t("propertyHotel")}</p>
+            <h2>ibis Nogent-sur-Marne</h2>
+            <p>{t("propertyReminder")}</p>
+          </div>
+          <span className="property-internal-badge">{t("propertyInternal")}</span>
+        </section>
+
         <section className="hero-band">
           <div className="hero-copy">
             <p className="eyebrow">{t("heroEyebrow")}</p>
@@ -1534,6 +1630,97 @@ export default function HomePage() {
         </section>
 
         {workspaceError && <div className="sync-error">{t(workspaceError)}</div>}
+
+        <section className="workspace-grid bottom department-task-grid">
+          <div className="panel">
+            <div className="panel-head">
+              <div>
+                <p className="eyebrow">{t("departmentTasksEyebrow")}</p>
+                <h2>{t("departmentTasksTitle")}</h2>
+              </div>
+              <label className="compact-label">
+                <span>{t("departmentTaskFilter")}</span>
+                <select value={departmentTaskFilter} onChange={(event) => setDepartmentTaskFilter(event.target.value)}>
+                  <option value="all">{t("allDepartments")}</option>
+                  {availableDepartments.map((department) => (
+                    <option key={department.id} value={department.id}>{departmentLabel(department.id, activeLanguage)}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="event-list">
+              {filteredDepartmentTasks.length === 0 ? (
+                <div className="empty">{t("noDepartmentTasks")}</div>
+              ) : (
+                filteredDepartmentTasks.map((task) => (
+                  <EventItem
+                    event={task}
+                    key={task.id}
+                    language={activeLanguage}
+                    t={t}
+                    onAddComment={addComment}
+                    onAddPhoto={addTaskPhoto}
+                    onStatusChange={updateTaskStatus}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          <aside className="panel department-task-creator">
+            <p className="eyebrow">{t("departmentTasksEyebrow")}</p>
+            <h2>{t("newDepartmentTask")}</h2>
+            {isDirection ? (
+              <form className="operator-form" onSubmit={submitDepartmentTask}>
+                <label>
+                  {t("department")}
+                  <select name="department" value={departmentTaskForm.department} onChange={handleDepartmentTaskChange} required>
+                    {DEPARTMENT_OPTIONS.map((department) => (
+                      <option key={department.id} value={department.id}>{departmentLabel(department.id, activeLanguage)}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  {t("taskTitle")}
+                  <input
+                    maxLength={160}
+                    name="title"
+                    onChange={handleDepartmentTaskChange}
+                    placeholder={t("taskTitlePlaceholder")}
+                    required
+                    value={departmentTaskForm.title}
+                  />
+                </label>
+                <label>
+                  {t("priority")}
+                  <select name="priority" value={departmentTaskForm.priority} onChange={handleDepartmentTaskChange} required>
+                    <option value="normal">{t("normal")}</option>
+                    <option value="urgent">{t("urgent")}</option>
+                    <option value="blocked">{t("blocking")}</option>
+                  </select>
+                </label>
+                <label>
+                  {t("taskDescription")}
+                  <textarea
+                    maxLength={4000}
+                    name="description"
+                    onChange={handleDepartmentTaskChange}
+                    placeholder={t("taskDescriptionPlaceholder")}
+                    required
+                    rows={5}
+                    value={departmentTaskForm.description}
+                  />
+                </label>
+                <div className="actions">
+                  <button type="submit">{t("createDepartmentTask")}</button>
+                </div>
+              </form>
+            ) : (
+              <p className="notice">{t("directionOnlyTaskCreation")}</p>
+            )}
+          </aside>
+        </section>
 
         {canUseHousekeeping && (
           <HousekeepingBoard
@@ -1732,14 +1919,14 @@ export default function HomePage() {
                 <p className="eyebrow">{t("operationalHistory")}</p>
                 <h2>{t("recentEvents")}</h2>
               </div>
-              <span className="badge">{events.length} {t("events")}</span>
+              <span className="badge">{operationalEvents.length} {t("events")}</span>
             </div>
 
             <div className="event-list">
-              {events.length === 0 ? (
+              {operationalEvents.length === 0 ? (
                 <div className="empty">{t("noEvents")}</div>
               ) : (
-                events.map((event) => (
+                operationalEvents.map((event) => (
                   <EventItem
                     event={event}
                     key={event.id}
@@ -2162,6 +2349,7 @@ function EventItem({ event, language, onAddComment, onAddPhoto, onStatusChange, 
   const channel = CHANNELS[event.department]?.channel || "#ops";
   const badgeClass = event.priority === "blocked" ? "blocked" : event.priority === "urgent" ? "urgent" : "done";
   const room = event.room ? ` - ${event.room}` : "";
+  const heading = event.title || eventLabel(event.eventType, language);
   const status = event.status || "open";
   const comments = event.comments || [];
   const attachments = event.attachments || [];
@@ -2182,7 +2370,7 @@ function EventItem({ event, language, onAddComment, onAddPhoto, onStatusChange, 
   return (
     <article className="event">
       <strong>
-        <span>{eventLabel(event.eventType, language)}{room}</span>
+        <span>{heading}{room}</span>
         <span className="event-badges">
           <span className={`badge ${badgeClass}`}>{t(event.priority === "blocked" ? "blocking" : event.priority)}</span>
           <span className={`badge ${statusClass(status)}`}>{statusLabel(status, language)}</span>
@@ -2190,6 +2378,7 @@ function EventItem({ event, language, onAddComment, onAddPhoto, onStatusChange, 
       </strong>
       <p>{event.note}</p>
       <div className="event-meta">
+        {event.title && <span className="badge">{eventLabel(event.eventType, language)}</span>}
         <span className="badge">{channel}</span>
         <small>{formatDateTime(event.createdAt, language)}</small>
       </div>
