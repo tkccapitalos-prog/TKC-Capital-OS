@@ -2,6 +2,12 @@
 
 Sistema operacional da TKC Capital em Next.js, com dashboard corporativo e um modulo de operacoes hoteleiras em `/hotel`.
 
+## Modulo de agentes
+
+O modulo `/ia` contem um primeiro registo de agentes portateis para direcao, hotel, conformidade, oportunidades, produto e direito social. Os prompts podem ser copiados para Codex, ChatGPT ou Claude sem chave API e sem custo adicional.
+
+A arquitetura, as regras de confidencialidade e o modo de utilizacao estao documentados em `docs/agents/README.md`.
+
 ## Modulo Hotel
 
 O modulo inclui:
