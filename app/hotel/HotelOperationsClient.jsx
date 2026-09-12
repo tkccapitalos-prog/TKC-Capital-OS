@@ -4,13 +4,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import {
+  acknowledgeHandover,
   createDepartmentMessage,
+  createHandover,
   createTask,
   createTaskComment,
   createTasks,
   loadHotelWorkspace,
   setHousekeepingBinomeAssignments,
   updateHousekeepingRoom,
+  updateHandoverStatus,
   updateOperatorLanguage,
   updateTask,
   uploadDepartmentDocument,
@@ -74,6 +77,7 @@ const DOCUMENT_STORAGE_KEY = "tkc-hotel-ops-documents";
 const HOUSEKEEPING_STORAGE_KEY = "tkc-hotel-ops-housekeeping-plan";
 const LANGUAGE_STORAGE_KEY = "tkc-hotel-ops-language";
 const ACTIVE_OPERATOR_STORAGE_KEY = "tkc-hotel-ops-active-operator";
+const HANDOVER_STORAGE_KEY = "tkc-hotel-ops-handovers:v1";
 const TKC_ROOMS_LEGACY_URL = "https://tkc-rooms-nogent.edreammotors.chatgpt.site";
 const IBIS_LOGO_URL = "https://images.group.accor.com/yrj0orc8tx24/7dFUOI9ugM7daxneFKLsiT/013e03109cadf22a89435390b151f4eb/LogoMarque-Groupe_ibis.svg";
 
@@ -335,6 +339,35 @@ const UI_TEXT_EXTRA = {
   propertyHotel: localized("Hotel abrangido", "Hôtel concerné", "Hotel", "Hotel", "Hotel", "Hotel"),
   propertyInternal: localized("Ferramenta operacional interna", "Outil opérationnel interne", "Internal operations tool", "Herramienta operativa interna", "Strumento operativo interno", "Wewnętrzne narzędzie operacyjne"),
   propertyReminder: localized("Esta pagina operacional destina-se exclusivamente ao hotel ibis Nogent-sur-Marne.", "Cette page opérationnelle concerne exclusivement l'hôtel ibis Nogent-sur-Marne.", "This operations page is exclusively for ibis Nogent-sur-Marne hotel.", "Esta página operativa corresponde exclusivamente al hotel ibis Nogent-sur-Marne.", "Questa pagina operativa è riservata esclusivamente all'hotel ibis Nogent-sur-Marne.", "Ta strona operacyjna jest przeznaczona wyłącznie dla hotelu ibis Nogent-sur-Marne."),
+  handoverEyebrow: localized("Passagem de turno", "Passation de service", "Shift handover", "Cambio de turno", "Passaggio di turno", "Przekazanie zmiany"),
+  handoverTitle: localized("Assuntos a acompanhar ate ao fecho", "Sujets suivis jusqu'à leur clôture", "Topics tracked until closure", "Asuntos seguidos hasta el cierre", "Argomenti monitorati fino alla chiusura", "Sprawy śledzone do zamknięcia"),
+  handoverOpen: localized("Passagens abertas", "Passations ouvertes", "Open handovers", "Cambios abiertos", "Passaggi aperti", "Otwarte przekazania"),
+  handoverCarried: localized("Mantido no turno seguinte enquanto estiver aberto", "Maintenu au service suivant tant qu'il reste ouvert", "Carried into the next shift while open", "Se mantiene en el turno siguiente mientras siga abierto", "Riportato al turno successivo finché resta aperto", "Przenoszone na następną zmianę, dopóki jest otwarte"),
+  newHandover: localized("Nova passagem", "Nouvelle passation", "New handover", "Nuevo cambio", "Nuovo passaggio", "Nowe przekazanie"),
+  sourceDepartment: localized("Departamento de origem", "Service d'origine", "Source department", "Departamento de origen", "Reparto di origine", "Dział źródłowy"),
+  targetDepartment: localized("Departamento destinatario", "Service destinataire", "Target department", "Departamento destinatario", "Reparto destinatario", "Dział docelowy"),
+  handoverTitleLabel: localized("Assunto", "Sujet", "Topic", "Asunto", "Argomento", "Temat"),
+  handoverTitlePlaceholder: localized("Ex.: Quarto 204 aguarda intervencao", "Ex. : Chambre 204 en attente d'intervention", "E.g. Room 204 awaiting maintenance", "Ej.: Habitación 204 pendiente de intervención", "Es.: Camera 204 in attesa di intervento", "Np. Pokój 204 oczekuje na interwencję"),
+  handoverDetails: localized("Contexto e acao esperada", "Contexte et action attendue", "Context and expected action", "Contexto y acción esperada", "Contesto e azione attesa", "Kontekst i oczekiwane działanie"),
+  handoverDetailsPlaceholder: localized("Indique o que aconteceu, o que falta e quem deve ser informado.", "Indiquez ce qui s'est passé, ce qui reste à faire et qui doit être informé.", "State what happened, what remains and who must be informed.", "Indique qué ocurrió, qué queda por hacer y quién debe ser informado.", "Indicare cosa è successo, cosa resta da fare e chi deve essere informato.", "Opisz, co się wydarzyło, co pozostało i kogo należy poinformować."),
+  location: localized("Quarto ou zona", "Chambre ou zone", "Room or area", "Habitación o zona", "Camera o zona", "Pokój lub strefa"),
+  locationPlaceholder: localized("Ex.: 204, rececao, bar", "Ex. : 204, réception, bar", "E.g. 204, reception, bar", "Ej.: 204, recepción, bar", "Es.: 204, reception, bar", "Np. 204, recepcja, bar"),
+  shift: localized("Turno", "Service", "Shift", "Turno", "Turno", "Zmiana"),
+  morning: localized("Manha", "Matin", "Morning", "Mañana", "Mattina", "Rano"),
+  evening: localized("Tarde", "Soir", "Evening", "Tarde", "Sera", "Wieczór"),
+  night: localized("Noite", "Nuit", "Night", "Noche", "Notte", "Noc"),
+  otherShift: localized("Outro", "Autre", "Other", "Otro", "Altro", "Inna"),
+  createHandover: localized("Criar passagem", "Créer la passation", "Create handover", "Crear cambio", "Crea passaggio", "Utwórz przekazanie"),
+  noHandovers: localized("Nenhuma passagem visivel para os seus departamentos.", "Aucune passation visible pour vos services.", "No handover visible for your departments.", "Ningún cambio visible para sus departamentos.", "Nessun passaggio visibile per i tuoi reparti.", "Brak przekazań widocznych dla Twoich działów."),
+  acknowledge: localized("Lido e assumido", "Lu et pris en charge", "Read and acknowledged", "Leído y asumido", "Letto e preso in carico", "Przeczytano i przyjęto"),
+  acknowledged: localized("Leitura confirmada", "Lecture confirmée", "Acknowledged", "Lectura confirmada", "Lettura confermata", "Odczyt potwierdzony"),
+  readBy: localized("Lido por", "Lu par", "Read by", "Leído por", "Letto da", "Przeczytane przez"),
+  carriedForward: localized("Transferencia automatica ativa", "Report automatique actif", "Automatic carry-over active", "Traspaso automático activo", "Riporto automatico attivo", "Automatyczne przeniesienie aktywne"),
+  savingHandover: localized("A guardar passagem", "Enregistrement de la passation", "Saving handover", "Guardando cambio", "Salvataggio passaggio", "Zapisywanie przekazania"),
+  handoverSaved: localized("Passagem criada", "Passation créée", "Handover created", "Cambio creado", "Passaggio creato", "Przekazanie utworzone"),
+  handoverError: localized("Erro ao criar passagem", "Erreur lors de la création de la passation", "Error creating handover", "Error al crear el cambio", "Errore durante la creazione del passaggio", "Błąd tworzenia przekazania"),
+  handoverStatusError: localized("Erro ao atualizar passagem", "Erreur de mise à jour de la passation", "Error updating handover", "Error al actualizar el cambio", "Errore di aggiornamento del passaggio", "Błąd aktualizacji przekazania"),
+  handoverAckError: localized("Erro ao confirmar leitura", "Erreur lors de la confirmation de lecture", "Error acknowledging handover", "Error al confirmar la lectura", "Errore nella conferma di lettura", "Błąd potwierdzenia odczytu"),
   departmentTasksEyebrow: localized("Tarefas por departamento", "Tâches par département", "Tasks by department", "Tareas por departamento", "Attività per reparto", "Zadania według działu"),
   departmentTasksTitle: localized("Plano de tarefas da equipa", "Plan de tâches des équipes", "Team task plan", "Plan de tareas del equipo", "Piano attività dei team", "Plan zadań zespołów"),
   departmentTaskFilter: localized("Filtrar por departamento", "Filtrer par département", "Filter by department", "Filtrar por departamento", "Filtra per reparto", "Filtruj według działu"),
@@ -540,6 +573,16 @@ const initialDepartmentTaskForm = {
   priority: "normal"
 };
 
+const initialHandoverForm = {
+  sourceDepartment: "reception",
+  targetDepartment: "handover",
+  title: "",
+  details: "",
+  location: "",
+  priority: "normal",
+  shiftCode: "other"
+};
+
 const initialOperatorForm = {
   name: "",
   email: "",
@@ -722,11 +765,13 @@ function buildFloorRooms(floor, count) {
 
 export default function HomePage() {
   const [events, setEvents] = useState([]);
+  const [handovers, setHandovers] = useState([]);
   const [ideas, setIdeas] = useState([]);
   const [operators, setOperators] = useState([]);
   const [housekeepingPlan, setHousekeepingPlan] = useState(buildHousekeepingPlan);
   const [form, setForm] = useState(initialForm);
   const [departmentTaskForm, setDepartmentTaskForm] = useState(initialDepartmentTaskForm);
+  const [handoverForm, setHandoverForm] = useState(initialHandoverForm);
   const [departmentTaskFilter, setDepartmentTaskFilter] = useState("all");
   const [operatorForm, setOperatorForm] = useState(initialOperatorForm);
   const [departmentChats, setDepartmentChats] = useState({});
@@ -772,6 +817,7 @@ export default function HomePage() {
 
       setCurrentProfile(workspace.profile);
       setEvents(workspace.tasks || []);
+      setHandovers(workspace.handovers || []);
       setDepartmentChats(workspace.messages || {});
       setDepartmentDocs(workspace.documents || {});
       if (workspace.housekeeping) setHousekeepingPlan(workspace.housekeeping);
@@ -796,6 +842,11 @@ export default function HomePage() {
           ? { ...current, department: fallbackDepartment }
           : current
       );
+      setHandoverForm((current) =>
+        allowedDepartments.length > 0 && !allowedDepartments.includes(current.sourceDepartment)
+          ? { ...current, sourceDepartment: fallbackDepartment }
+          : current
+      );
       setWorkspaceError("");
       setAuthMode("authenticated");
       setSyncState("syncedSupabase");
@@ -815,6 +866,7 @@ export default function HomePage() {
 
       try {
         setEvents(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
+        setHandovers(JSON.parse(localStorage.getItem(HANDOVER_STORAGE_KEY) || "[]"));
         setIdeas(JSON.parse(localStorage.getItem(IDEAS_STORAGE_KEY) || "[]"));
         setOperators(JSON.parse(localStorage.getItem(OPERATORS_STORAGE_KEY) || "[]"));
         setDepartmentChats(JSON.parse(localStorage.getItem(DEPARTMENT_CHAT_STORAGE_KEY) || "{}"));
@@ -824,6 +876,7 @@ export default function HomePage() {
         setActiveOperatorId(localStorage.getItem(ACTIVE_OPERATOR_STORAGE_KEY) || "");
       } catch {
         setEvents([]);
+        setHandovers([]);
         setIdeas([]);
         setOperators([]);
         setDepartmentChats({});
@@ -873,6 +926,10 @@ export default function HomePage() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
   }, [events]);
+
+  useEffect(() => {
+    localStorage.setItem(HANDOVER_STORAGE_KEY, JSON.stringify(handovers));
+  }, [handovers]);
 
   useEffect(() => {
     localStorage.setItem(IDEAS_STORAGE_KEY, JSON.stringify(ideas));
@@ -956,6 +1013,15 @@ export default function HomePage() {
   const filteredDepartmentTasks = departmentTaskFilter === "all"
     ? departmentTasks
     : departmentTasks.filter((event) => event.department === departmentTaskFilter);
+  const openHandovers = handovers.filter((topic) => topic.status !== "done");
+  const sortedHandovers = [...handovers].sort((left, right) => {
+    if (left.status === "done" && right.status !== "done") return 1;
+    if (left.status !== "done" && right.status === "done") return -1;
+    return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+  });
+  const handoverSourceDepartments = availableDepartments.filter((department) => department.id !== "handover");
+  const handoverOperatorId = currentProfile?.id || activeOperatorId;
+  const canCreateHandover = !isRoomOperator && handoverSourceDepartments.length > 0;
 
   if (authMode === "checking") {
     return <AccessState title={t("checkingSession")} message={t("connectingSupabase")} returnLabel={t("returnLogin")} />;
@@ -1053,6 +1119,116 @@ export default function HomePage() {
     addEvent(payload);
     setDepartmentTaskForm((current) => ({ ...initialDepartmentTaskForm, department: current.department }));
     setSyncState("departmentTaskSaved");
+  }
+
+  function handleHandoverChange(event) {
+    const { name, value } = event.target;
+    setHandoverForm((current) => ({ ...current, [name]: value }));
+  }
+
+  async function submitHandover(event) {
+    event.preventDefault();
+    if (!canCreateHandover) return;
+
+    const title = handoverForm.title.trim();
+    const details = handoverForm.details.trim();
+    if (!title || !details) return;
+
+    const payload = {
+      id: crypto.randomUUID(),
+      propertyCode: "ibis_nogent",
+      sourceDepartment: handoverForm.sourceDepartment,
+      targetDepartments: [handoverForm.targetDepartment],
+      title,
+      details,
+      location: handoverForm.location.trim(),
+      priority: handoverForm.priority,
+      status: "open",
+      shiftCode: handoverForm.shiftCode,
+      createdByOperatorId: handoverOperatorId,
+      createdByName: currentProfile?.full_name || activeOperator?.name || t("directionMode"),
+      acknowledgements: [],
+      metadata: { schemaVersion: 1 },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      closedAt: null
+    };
+
+    if (isProduction && supabaseRef.current && currentProfile?.id) {
+      setSyncState("savingHandover");
+      try {
+        await createHandover(supabaseRef.current, payload, currentProfile.id);
+        await refreshWorkspace();
+        setHandoverForm((current) => ({
+          ...initialHandoverForm,
+          sourceDepartment: current.sourceDepartment,
+          targetDepartment: current.targetDepartment
+        }));
+        setSyncState("handoverSaved");
+        setWorkspaceError("");
+      } catch (error) {
+        setSyncState("handoverError");
+        setWorkspaceError(error instanceof Error ? error.message : "handoverError");
+      }
+      return;
+    }
+
+    setHandovers((current) => [payload, ...current].slice(0, 120));
+    setHandoverForm((current) => ({
+      ...initialHandoverForm,
+      sourceDepartment: current.sourceDepartment,
+      targetDepartment: current.targetDepartment
+    }));
+    setSyncState("handoverSaved");
+  }
+
+  async function changeHandoverStatus(topicId, status) {
+    if (isProduction && supabaseRef.current) {
+      try {
+        await updateHandoverStatus(supabaseRef.current, topicId, status);
+        await refreshWorkspace({ silent: true });
+      } catch (error) {
+        setWorkspaceError(error instanceof Error ? error.message : "handoverStatusError");
+      }
+      return;
+    }
+
+    const now = new Date().toISOString();
+    setHandovers((current) => current.map((topic) =>
+      topic.id === topicId
+        ? { ...topic, status, updatedAt: now, closedAt: status === "done" ? now : null }
+        : topic
+    ));
+  }
+
+  async function confirmHandoverRead(topicId) {
+    if (!handoverOperatorId) return;
+
+    if (isProduction && supabaseRef.current && currentProfile?.id) {
+      try {
+        await acknowledgeHandover(supabaseRef.current, topicId, currentProfile.id);
+        await refreshWorkspace({ silent: true });
+      } catch (error) {
+        setWorkspaceError(error instanceof Error ? error.message : "handoverAckError");
+      }
+      return;
+    }
+
+    setHandovers((current) => current.map((topic) => {
+      if (topic.id !== topicId) return topic;
+      if ((topic.acknowledgements || []).some((item) => item.operatorId === handoverOperatorId)) return topic;
+      return {
+        ...topic,
+        acknowledgements: [
+          ...(topic.acknowledgements || []),
+          {
+            operatorId: handoverOperatorId,
+            operatorName: activeOperator?.name || t("directionMode"),
+            acknowledgedAt: new Date().toISOString()
+          }
+        ]
+      };
+    }));
   }
 
   function addEvent(payload) {
@@ -1630,6 +1806,124 @@ export default function HomePage() {
         </section>
 
         {workspaceError && <div className="sync-error">{t(workspaceError)}</div>}
+
+        <section className="workspace-grid bottom handover-grid">
+          <div className="panel handover-board">
+            <div className="panel-head">
+              <div>
+                <p className="eyebrow">{t("handoverEyebrow")}</p>
+                <h2>{t("handoverTitle")}</h2>
+              </div>
+              <div className="handover-counter">
+                <strong>{openHandovers.length}</strong>
+                <span>{t("handoverOpen")}</span>
+              </div>
+            </div>
+            <p className="notice handover-rule">{t("handoverCarried")}</p>
+
+            <div className="handover-list">
+              {handovers.length === 0 ? (
+                <div className="empty">{t("noHandovers")}</div>
+              ) : (
+                sortedHandovers.map((topic) => (
+                  <HandoverItem
+                    currentOperatorId={handoverOperatorId}
+                    key={topic.id}
+                    language={activeLanguage}
+                    onAcknowledge={confirmHandoverRead}
+                    onStatusChange={changeHandoverStatus}
+                    t={t}
+                    topic={topic}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          <aside className="panel handover-creator">
+            <p className="eyebrow">{t("handoverEyebrow")}</p>
+            <h2>{t("newHandover")}</h2>
+            {canCreateHandover ? (
+              <form className="operator-form" onSubmit={submitHandover}>
+                <div className="handover-form-departments">
+                  <label>
+                    {t("sourceDepartment")}
+                    <select name="sourceDepartment" value={handoverForm.sourceDepartment} onChange={handleHandoverChange} required>
+                      {handoverSourceDepartments.map((department) => (
+                        <option key={department.id} value={department.id}>{departmentLabel(department.id, activeLanguage)}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    {t("targetDepartment")}
+                    <select name="targetDepartment" value={handoverForm.targetDepartment} onChange={handleHandoverChange} required>
+                      {DEPARTMENT_OPTIONS.map((department) => (
+                        <option key={department.id} value={department.id}>{departmentLabel(department.id, activeLanguage)}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <label>
+                  {t("handoverTitleLabel")}
+                  <input
+                    maxLength={160}
+                    name="title"
+                    onChange={handleHandoverChange}
+                    placeholder={t("handoverTitlePlaceholder")}
+                    required
+                    value={handoverForm.title}
+                  />
+                </label>
+                <label>
+                  {t("handoverDetails")}
+                  <textarea
+                    maxLength={4000}
+                    name="details"
+                    onChange={handleHandoverChange}
+                    placeholder={t("handoverDetailsPlaceholder")}
+                    required
+                    rows={5}
+                    value={handoverForm.details}
+                  />
+                </label>
+                <div className="handover-form-departments">
+                  <label>
+                    {t("location")}
+                    <input
+                      maxLength={80}
+                      name="location"
+                      onChange={handleHandoverChange}
+                      placeholder={t("locationPlaceholder")}
+                      value={handoverForm.location}
+                    />
+                  </label>
+                  <label>
+                    {t("shift")}
+                    <select name="shiftCode" value={handoverForm.shiftCode} onChange={handleHandoverChange} required>
+                      <option value="morning">{t("morning")}</option>
+                      <option value="evening">{t("evening")}</option>
+                      <option value="night">{t("night")}</option>
+                      <option value="other">{t("otherShift")}</option>
+                    </select>
+                  </label>
+                </div>
+                <label>
+                  {t("priority")}
+                  <select name="priority" value={handoverForm.priority} onChange={handleHandoverChange} required>
+                    <option value="normal">{t("normal")}</option>
+                    <option value="urgent">{t("urgent")}</option>
+                    <option value="blocked">{t("blocking")}</option>
+                  </select>
+                </label>
+                <div className="actions">
+                  <button type="submit">{t("createHandover")}</button>
+                </div>
+              </form>
+            ) : (
+              <p className="notice">{t("noHandovers")}</p>
+            )}
+          </aside>
+        </section>
 
         <section className="workspace-grid bottom department-task-grid">
           <div className="panel">
@@ -2340,6 +2634,71 @@ function AccessState({ title, message, returnLabel }) {
         </section>
       </main>
     </div>
+  );
+}
+
+function HandoverItem({ currentOperatorId, language, onAcknowledge, onStatusChange, t, topic }) {
+  const acknowledgements = topic.acknowledgements || [];
+  const isAcknowledged = acknowledgements.some((item) => item.operatorId === currentOperatorId);
+  const badgeClass = topic.priority === "blocked" ? "blocked" : topic.priority === "urgent" ? "urgent" : "done";
+  const shiftLabel = topic.shiftCode === "other" ? t("otherShift") : t(topic.shiftCode);
+
+  return (
+    <article className={`handover-card ${topic.status === "done" ? "is-closed" : ""}`}>
+      <div className="handover-card-head">
+        <div>
+          <div className="handover-route">
+            <span>{departmentLabel(topic.sourceDepartment, language)}</span>
+            <span aria-hidden="true">→</span>
+            <span>{topic.targetDepartments.map((department) => departmentLabel(department, language)).join(", ")}</span>
+          </div>
+          <h3>{topic.title}</h3>
+        </div>
+        <div className="event-badges">
+          <span className={`badge ${badgeClass}`}>{t(topic.priority === "blocked" ? "blocking" : topic.priority)}</span>
+          <span className={`badge ${statusClass(topic.status)}`}>{statusLabel(topic.status, language)}</span>
+        </div>
+      </div>
+
+      <p>{topic.details}</p>
+      <div className="handover-meta">
+        {topic.location && <span className="badge">{topic.location}</span>}
+        <span className="badge">{shiftLabel}</span>
+        <small>{topic.createdByName} · {formatDateTime(topic.createdAt, language)}</small>
+      </div>
+
+      {topic.status !== "done" && <p className="carry-forward-note">↻ {t("carriedForward")}</p>}
+
+      <div className="task-actions" aria-label={t("taskState")}>
+        <button className="secondary" type="button" onClick={() => onStatusChange(topic.id, "open")}>{statusLabel("open", language)}</button>
+        <button className="secondary" type="button" onClick={() => onStatusChange(topic.id, "in_progress")}>{statusLabel("in_progress", language)}</button>
+        <button className="secondary" type="button" onClick={() => onStatusChange(topic.id, "blocked")}>{statusLabel("blocked", language)}</button>
+        <button type="button" onClick={() => onStatusChange(topic.id, "done")}>{statusLabel("done", language)}</button>
+      </div>
+
+      <div className="handover-acknowledgements">
+        <div>
+          <strong>{t("readBy")}</strong>
+          {acknowledgements.length > 0 ? (
+            <ul>
+              {acknowledgements.map((item) => (
+                <li key={item.operatorId}>{item.operatorName} · {formatDateTime(item.acknowledgedAt, language)}</li>
+              ))}
+            </ul>
+          ) : (
+            <span>—</span>
+          )}
+        </div>
+        <button
+          className={isAcknowledged ? "secondary" : ""}
+          disabled={!currentOperatorId || isAcknowledged}
+          onClick={() => onAcknowledge(topic.id)}
+          type="button"
+        >
+          {isAcknowledged ? t("acknowledged") : t("acknowledge")}
+        </button>
+      </div>
+    </article>
   );
 }
 

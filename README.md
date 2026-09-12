@@ -7,6 +7,7 @@ Sistema operacional da TKC Capital em Next.js, com dashboard corporativo e um mo
 O modulo inclui:
 
 - tarefas por departamento, comentarios e fotografias;
+- passagens de turno rastreadas, com estado, prioridade e confirmação nominal de leitura;
 - chat geral e chat autorizado por departamento;
 - perfis de operadores criados previamente pela direcao;
 - convite por email, criacao de palavra-passe e primeiro acesso;
@@ -52,3 +53,6 @@ npm run build
 ```
 
 Endpoint de saude: `/api/health`.
+
+O procedimento de ativação e os testes de aceitação do piloto estão documentados em
+[`docs/HOTEL_PILOT_P0.md`](docs/HOTEL_PILOT_P0.md).

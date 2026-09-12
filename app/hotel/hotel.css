@@ -379,6 +379,133 @@
   min-height: 150px;
 }
 
+.hotel-ops .handover-grid {
+  grid-template-columns: minmax(0, 1.3fr) minmax(340px, 0.55fr);
+}
+
+.hotel-ops .handover-counter {
+  display: grid;
+  min-width: 120px;
+  justify-items: end;
+}
+
+.hotel-ops .handover-counter strong {
+  color: var(--brand-blue);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.hotel-ops .handover-counter span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.hotel-ops .handover-rule {
+  margin: -4px 0 16px;
+}
+
+.hotel-ops .handover-list {
+  display: grid;
+  gap: 12px;
+}
+
+.hotel-ops .handover-card {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(18, 60, 105, 0.2);
+  border-left: 5px solid var(--brand-blue);
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+}
+
+.hotel-ops .handover-card.is-closed {
+  border-left-color: var(--green);
+  opacity: 0.74;
+}
+
+.hotel-ops .handover-card-head,
+.hotel-ops .handover-meta,
+.hotel-ops .handover-acknowledgements {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hotel-ops .handover-card h3,
+.hotel-ops .handover-card p {
+  margin: 0;
+}
+
+.hotel-ops .handover-card p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.hotel-ops .handover-route {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 5px;
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hotel-ops .handover-meta {
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.hotel-ops .handover-meta small {
+  color: var(--muted);
+}
+
+.hotel-ops .carry-forward-note {
+  color: var(--accent-dark) !important;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.hotel-ops .handover-acknowledgements {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.hotel-ops .handover-acknowledgements > div {
+  display: grid;
+  gap: 5px;
+}
+
+.hotel-ops .handover-acknowledgements ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: 12px;
+  list-style: none;
+}
+
+.hotel-ops .handover-creator .operator-form {
+  grid-template-columns: 1fr;
+  margin-top: 18px;
+}
+
+.hotel-ops .handover-form-departments {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .hotel-ops .panel {
   padding: 22px;
   border: 1px solid var(--line);
@@ -480,6 +607,11 @@
 
 .hotel-ops button.secondary:hover {
   background: #f7f0e4;
+}
+
+.hotel-ops button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .hotel-ops .channel-list,
@@ -1036,6 +1168,10 @@
   .hotel-ops .operator-form,
   .hotel-ops .check-grid,
   .hotel-ops .photo-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .hotel-ops .handover-form-departments {
     grid-template-columns: 1fr;
   }
 }
